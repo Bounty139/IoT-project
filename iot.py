@@ -15,11 +15,13 @@ from pathlib import Path
 
 
 # CYBER DEFENCE — MAIN PROJECT v0.9
-
+# This game tracks a fictional cyber defence scenario where the player
+# manages funding, protects devices, and fights off malware attacks.
 
 # ============================================================
 
 
+# Starting player economy and current game state.
 funding = 200
 
 
@@ -29,6 +31,8 @@ wave = 1
 difficulty = "Normal"
 
 
+# Difficulty settings change how quickly malware spreads and how often
+# new infections appear. Higher difficulties make the game harder.
 DIFFICULTY_SETTINGS = {
 
     "Easy": {
@@ -64,22 +68,25 @@ DIFFICULTY_SETTINGS = {
 }
 
 
+# Recovery kits let the player restore compromised devices or infrastructure.
 recoveries = 4
 
 
+# Backup system unlocks later and can restore the database in an emergency.
 backup_available = False
 
 
 backup_used = False
 
 
-# Emergency Network Restart
-
+# Emergency Network Restart gives a one-time way to clear a critical database
+# infection, with reduced infrastructure growth for the next few waves.
 restart_available = True
 
 restart_waves_remaining = 0
 
 
+# These flags control whether Liam or Will can provide advice in-game.
 liam_assistance = True
 
 
@@ -95,11 +102,14 @@ will_advice_turns = 0
 tutorial_complete = False
 
 
+# These values track repeated player choices and anti-skip protections.
 last_choice = None
 
 repeated_choice_count = 0
 
 trojan_event_state = "inactive"
+
+trojan_used = False
 
 
 
@@ -108,7 +118,8 @@ trojan_event_state = "inactive"
 
 
 # DEVICES
-
+# Each device stores its current infection level, protection level, and any
+# security tools that have been installed on it.
 
 # ============================================================
 
@@ -297,12 +308,13 @@ active_threats = []
 
 
 def pause():
-
-
+    # Stops the game briefly and waits for the player to press Enter.
     input("\nPress ENTER to continue...")
 
 
 def read_menu_key():
+    # Reads a single arrow key or Enter key so the menu can support keyboard
+    # navigation on both Windows and Unix-like systems.
 
 
     if sys.platform == "win32":
@@ -355,7 +367,8 @@ def read_menu_key():
 
 
 def select_option(prompt, options):
-
+    # Displays a menu and lets the player select an option by number or arrow
+    # keys. It supports both normal terminal input and interactive key presses.
 
     if not sys.stdin.isatty():
 
@@ -427,9 +440,10 @@ def select_option(prompt, options):
 
 
 def get_choice(prompt, aliases=None, options=None):
+    # Collects player input, normalizes it, and detects repeated choices that
+    # could trigger the anti-skip Trojan Horse event.
 
-
-    global last_choice, repeated_choice_count, trojan_event_state
+    global last_choice, repeated_choice_count, trojan_event_state, trojan_used
 
 
     if options is not None:
@@ -461,6 +475,15 @@ def get_choice(prompt, aliases=None, options=None):
         repeated_choice_count = 1
 
 
+    if trojan_used:
+
+        repeated_choice_count = 0
+
+        last_choice = None
+
+        return choice
+
+
     if repeated_choice_count < 10:
 
         return choice
@@ -475,6 +498,7 @@ def get_choice(prompt, aliases=None, options=None):
     if trojan_event_state not in ("warning", "escalation"):
 
         trojan_event_state = "warning"
+        trojan_used = True
 
     print("That repeated choice was blocked.")
 
@@ -484,11 +508,11 @@ def get_choice(prompt, aliases=None, options=None):
 
 
 def clear_line():
-
-
+    # Prints a decorative divider line to separate big sections in the UI.
     print("\n" + arcade_text("═" * 60, "cyan", bold=True))
 
 def arcade_text(text, color="cyan", bold=False):
+    # Applies terminal color codes so text can stand out in the game UI.
 
     colors = {
         "cyan": "96",
@@ -513,7 +537,7 @@ def arcade_text(text, color="cyan", bold=False):
     return f"\033[{style}m{text}\033[0m"
 
 def infection_meter(value, width=10):
-
+    # Builds a visual infection bar for each device or infrastructure section.
     filled = round(max(0, min(100, value)) / 100 * width)
 
     color = "red" if value >= 75 else "yellow" if value >= 40 else "green"
@@ -525,6 +549,7 @@ def infection_meter(value, width=10):
     return f"[{bar}] {value:3d}%"
 
 def infection_label(value):
+    # Converts a numeric infection value into a simple status label.
 
     if value >= 75:
 
@@ -537,7 +562,7 @@ def infection_label(value):
     return arcade_text("OK", "green", bold=True)
 
 def show_wave_dashboard():
-
+    # Prints a compact HUD for the current wave, including budget and core stats.
     clear_line()
 
     print(arcade_text(f"★ CYBER DEFENCE // WAVE {wave} ★", "magenta", bold=True))
@@ -563,7 +588,7 @@ def show_wave_dashboard():
 
 
 def show_status():
-
+    # Shows all device, network, and database conditions in a readable report.
 
     clear_line()
 
@@ -664,7 +689,7 @@ def show_status():
 
 
 def show_threats():
-
+    # Lists all infected systems so the player can prioritize actions.
 
     clear_line()
 
@@ -783,7 +808,7 @@ def show_threats():
 
 
 def protect_device():
-
+    # Increases protection on one device for a cost of £10.
 
     global funding
 
@@ -866,7 +891,7 @@ def protect_device():
 
 
 def buy_antivirus():
-
+    # Adds antivirus to a device, slowing malware growth and reducing spread.
 
     global funding
 
@@ -943,7 +968,7 @@ def buy_antivirus():
 
 
 def buy_password_security():
-
+    # Adds stronger password protection for a device to reduce infection risk.
 
     global funding
 
@@ -1020,7 +1045,7 @@ def buy_password_security():
 
 
 def upgrade_database():
-
+    # Raises the database level for extra defense and bonus income.
 
     global funding
 
@@ -1100,7 +1125,7 @@ def upgrade_database():
 
 
 def backup_database():
-
+    # Unlocks a one-time backup feature if the player reaches wave 5.
 
     global funding
 
@@ -1186,7 +1211,7 @@ def backup_database():
 
 
 def recover_device():
-
+    # Recovers a fully compromised device and resets its security settings.
 
     global recoveries
 
@@ -1287,7 +1312,7 @@ def recover_device():
 
 
 def recover_infrastructure():
-
+    # Restores a badly infected infrastructure component to healthy state.
 
     global recoveries
 
@@ -1376,7 +1401,7 @@ def recover_infrastructure():
 
 
 def phishing_email():
-
+    # Simulates a malicious email that may infect a random device if clicked.
 
     global recoveries
 
@@ -1484,7 +1509,7 @@ def phishing_email():
 
 
 def legitimate_email():
-
+    # Displays a harmless message with advice from the development team.
 
     print("\n" + "=" * 60)
 
@@ -1528,7 +1553,7 @@ def legitimate_email():
 
 
 def liam_email():
-
+    # Gives the player a bonus of funding and recovery kits from Liam.
 
     global funding
 
@@ -1602,7 +1627,7 @@ def liam_email():
 
 
 def will_email():
-
+    # Gives a small reward and player-friendly advice from the testing team.
 
     global recoveries
 
@@ -1667,7 +1692,7 @@ def will_email():
 
 
 def receive_email():
-
+    # Randomly selects the next email event to add gameplay variety.
 
     roll = random.randint(1, 100)
 
@@ -1708,7 +1733,7 @@ def receive_email():
 
 
 def developer_assistance():
-
+    # Lets the player request guidance from Liam or Will, with limited usage.
 
     global liam_assistance
 
@@ -1827,7 +1852,8 @@ def developer_assistance():
 
 
 def malware_attack():
-
+    # Spreads infections across devices and network infrastructure using the
+    # current difficulty settings, protection values, and security upgrades.
 
     global active_threats
 
@@ -2017,7 +2043,7 @@ def malware_attack():
 
 
 def generate_funding():
-
+    # Adds passive income based on average device protection and database level.
 
     global funding
 
@@ -2076,6 +2102,7 @@ def generate_funding():
 
 
 def emergency_network_restart():
+    # Gives a one-time emergency reset for the infrastructure and database.
 
     global restart_available
 
@@ -2154,6 +2181,8 @@ def emergency_network_restart():
 
 
 def check_database():
+    # Checks whether the database infection has reached 100% and triggers the
+    # backup or game-over flow if necessary.
 
     global backup_used
 
@@ -2205,7 +2234,7 @@ LEADERBOARD_PATH = Path(__file__).with_name("leaderboard.json")
 
 
 def record_leaderboard_score():
-
+    # Saves the player's score at the end of the run in a JSON leaderboard.
 
     score = max(0, wave - 1)
 
@@ -2345,7 +2374,7 @@ def record_leaderboard_score():
 
 
 def tutorial_wave():
-
+    # Shows a beginner walkthrough explaining infection, protection, and funding.
 
     global funding
 
@@ -2746,7 +2775,7 @@ def tutorial_wave():
 
 
 def how_to_play():
-
+    # Explains the basic loop of the game before the player starts playing.
 
     clear_line()
 
@@ -2820,7 +2849,8 @@ The further you survive, the better your result.
 
 
 def upgrades_menu():
-
+    # Main shop menu where the player can spend funding on device upgrades,
+    # recovery tools, and database improvements.
 
     while True:
 
@@ -2945,7 +2975,8 @@ def upgrades_menu():
 
 
 def play_wave():
-
+    # Runs one full game turn: player chooses actions, malware triggers, email
+    # events may happen, and funding is generated for the next wave.
 
     global wave
 
@@ -3130,6 +3161,8 @@ def play_wave():
 
 
 def trojan_defence_snapshot():
+    # Captures the important game values so the anti-skip Trojan event can
+    # detect whether the player took a defensive action.
 
     """Return game values used to detect a successful defensive action."""
 
@@ -3155,6 +3188,8 @@ def trojan_defence_snapshot():
 
 
 def handle_trojan_defence():
+    # Resets or cancels the Trojan event when the player performs a valid
+    # defensive action such as upgrading or recovering systems.
 
     """A successful upgrade/recovery resets skips or cancels the event."""
 
@@ -3185,10 +3220,12 @@ def handle_trojan_defence():
 
 
 def trigger_trojan_attack():
+    # Applies the next anti-skip strike from the Trojan event if the player has
+    # been repeating the same choice too often.
 
     """Apply the next anti-skip strike and return whether growth is paused."""
 
-    global trojan_event_state
+    global trojan_event_state, trojan_used
 
 
     if trojan_event_state == "warning":
@@ -3268,7 +3305,7 @@ def trigger_trojan_attack():
 
 
 def main_game():
-
+    # Runs the main loop after the tutorial, continuing each wave until defeat.
 
     global wave
 
@@ -3321,7 +3358,8 @@ def main_game():
 
 
 def start_game():
-
+    # Starts the title menu and lets the player choose to play, read the guide,
+    # exit, or change the difficulty.
 
     global difficulty
 
