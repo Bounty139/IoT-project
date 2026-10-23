@@ -1,4203 +1,3417 @@
 import random
 
-import time 
+import time
 
- 
 
-import sys 
+import sys
 
- 
 
-import json 
+import json
 
- 
 
-from pathlib import Path 
+from pathlib import Path
 
-  
+# ============================================================
 
-# ============================================================ 
 
-  
+# CYBER DEFENCE — MAIN PROJECT v0.9
 
-# CYBER DEFENCE — MAIN PROJECT v0.9 
 
-  
+# ============================================================
 
-# ============================================================ 
 
-  
+funding = 200
 
-funding = 200 
 
-  
+wave = 1
 
-wave = 1 
 
-  
+difficulty = "Normal"
 
-difficulty = "Normal" 
 
- 
+DIFFICULTY_SETTINGS = {
 
-DIFFICULTY_SETTINGS = { 
+    "Easy": {
 
-    "Easy": { 
+        "device_growth": 5,
 
-        "device_growth": 5, 
+        "infection_chance": 15,
 
-        "infection_chance": 15, 
+        "infrastructure_growth": 7,
 
-        "infrastructure_growth": 7, 
+    },
 
-    }, 
+    "Normal": {
 
-    "Normal": { 
+        "device_growth": 7,
 
-        "device_growth": 7, 
+        "infection_chance": 20,
 
-        "infection_chance": 20, 
+        "infrastructure_growth": 10,
 
-        "infrastructure_growth": 10, 
+    },
 
-    }, 
+    "Hard": {
 
-    "Hard": { 
+        "device_growth": 10,
 
-        "device_growth": 10, 
+        "infection_chance": 30,
 
-        "infection_chance": 30, 
+        "infrastructure_growth": 15,
 
-        "infrastructure_growth": 15, 
+    },
 
-    }, 
+}
 
-} 
 
-  
+recoveries = 4
 
-recoveries = 4 
 
-  
+backup_available = False
 
-backup_available = False 
 
-  
+backup_used = False
 
-backup_used = False 
 
-  
+# Emergency Network Restart
 
-# Emergency Network Restart 
+restart_available = True
 
-restart_available = True 
+restart_waves_remaining = 0
 
-restart_waves_remaining = 0 
 
-  
+liam_assistance = True
 
-liam_assistance = True 
 
-  
+will_assistance = True
 
-will_assistance = True 
 
-  
+liam_advice_turns = 0
 
-liam_advice_turns = 0 
 
-  
+will_advice_turns = 0
 
-will_advice_turns = 0 
 
-  
+tutorial_complete = False
 
-tutorial_complete = False 
 
- 
+last_choice = None
 
-last_choice = None 
+repeated_choice_count = 0
 
-repeated_choice_count = 0 
+trojan_event_state = "inactive"
 
-trojan_event_state = "inactive" 
 
-  
 
-  
 
-# ============================================================ 
+# ============================================================
 
-  
 
-# DEVICES 
+# DEVICES
 
-  
 
-# ============================================================ 
+# ============================================================
 
-  
 
-devices = { 
+devices = {
 
-  
 
-    "PC": { 
+    "PC": {
 
-  
 
-        "infection": 0, 
+        "infection": 0,
 
-  
 
-        "protection": 0, 
+        "protection": 0,
 
-  
 
-        "antivirus": False, 
 
-  
+        "antivirus": False,
 
-        "password": False 
 
-  
+        "password": False
 
-    }, 
 
-  
+    },
 
-    "Laptop": { 
 
-  
+    "Laptop": {
 
-        "infection": 0, 
 
-  
+        "infection": 0,
 
-        "protection": 0, 
 
-  
+        "protection": 0,
 
-        "antivirus": False, 
 
-  
+        "antivirus": False,
 
-        "password": False 
 
-  
+        "password": False
 
-    }, 
 
-  
+    },
 
-    "Phone": { 
 
-  
+    "Phone": {
 
-        "infection": 0, 
 
-  
+        "infection": 0,
 
-        "protection": 0, 
 
-  
+        "protection": 0,
 
-        "antivirus": False, 
 
-  
+        "antivirus": False,
 
-        "password": False 
 
-  
+        "password": False
 
-    }, 
 
-  
+    },
 
-    "Printer": { 
 
-  
+    "Printer": {
 
-        "infection": 0, 
 
-  
+        "infection": 0,
 
-        "protection": 0, 
 
-  
+        "protection": 0,
 
-        "antivirus": False, 
 
-  
+        "antivirus": False,
 
-        "password": False 
 
-  
+        "password": False
 
-    } 
 
-  
+    }
 
-} 
 
-  
+}
 
-  
 
-# ============================================================ 
 
-  
 
-# INFRASTRUCTURE 
+# ============================================================
 
-  
 
-# ============================================================ 
+# INFRASTRUCTURE
 
-  
 
-infrastructure = { 
+# ============================================================
 
-  
 
-    "Router": { 
+infrastructure = {
 
-  
 
-        "infection": 0, 
+    "Router": {
 
-  
 
-        "protection": 0 
+        "infection": 0,
 
-  
 
-    }, 
+        "protection": 0
 
-  
 
-    "Switch": { 
+    },
 
-  
 
-        "infection": 0, 
+    "Switch": {
 
-  
 
-        "protection": 0 
+        "infection": 0,
 
-  
 
-    }, 
+        "protection": 0
 
-  
 
-    "Network": { 
+    },
 
-  
 
-        "infection": 0, 
+    "Network": {
 
-  
 
-        "protection": 0 
+        "infection": 0,
 
-  
 
-    } 
+        "protection": 0
 
-  
 
-} 
+    }
 
-  
 
-  
+}
 
-# ============================================================ 
 
-  
 
-# DATABASE 
 
-  
+# ============================================================
 
-# ============================================================ 
 
-  
+# DATABASE
 
-database = { 
 
-  
+# ============================================================
 
-    "infection": 0, 
 
-  
+database = {
 
-    "level": 1, 
 
-  
+    "infection": 0,
 
-    "protection": 0 
 
-  
+    "level": 1,
 
-} 
 
-  
+    "protection": 0
 
-  
 
-# ============================================================ 
+}
 
-  
 
-# THREATS 
 
-  
 
-# ============================================================ 
+# ============================================================
 
-  
 
-active_threats = [] 
+# THREATS
 
-  
 
-  
+# ============================================================
 
-# ============================================================ 
 
-  
+active_threats = []
 
-# BASIC FUNCTIONS 
 
-  
 
-# ============================================================ 
 
-  
+# ============================================================
 
-def pause(): 
 
-  
+# BASIC FUNCTIONS
 
-    input("\nPress ENTER to continue...") 
 
- 
+# ============================================================
 
-def read_menu_key(): 
 
- 
+def pause():
 
-    if sys.platform == "win32": 
 
-        import msvcrt 
+    input("\nPress ENTER to continue...")
 
- 
 
-        key = msvcrt.getwch() 
+def read_menu_key():
 
-        if key in ("\x00", "\xe0"): 
 
-            return {"H": "UP", "P": "DOWN"}.get(msvcrt.getwch(), "") 
+    if sys.platform == "win32":
 
-        return "ENTER" if key in ("\r", "\n") else key 
+        import msvcrt
 
- 
 
-    import termios 
+        key = msvcrt.getwch()
 
-    import tty 
+        if key in ("\x00", "\xe0"):
 
- 
+            return {"H": "UP", "P": "DOWN"}.get(msvcrt.getwch(), "")
 
-    descriptor = sys.stdin.fileno() 
+        return "ENTER" if key in ("\r", "\n") else key
 
-    previous_settings = termios.tcgetattr(descriptor) 
 
-    try: 
+    import termios
 
-        tty.setcbreak(descriptor) 
+    import tty
 
-        key = sys.stdin.read(1) 
 
-        if key == "\x1b": 
+    descriptor = sys.stdin.fileno()
 
-            key += sys.stdin.read(2) 
+    previous_settings = termios.tcgetattr(descriptor)
 
-    finally: 
+    try:
 
-        termios.tcsetattr(descriptor, termios.TCSADRAIN, previous_settings) 
+        tty.setcbreak(descriptor)
 
- 
+        key = sys.stdin.read(1)
 
-    if key == "\x1b[A": 
+        if key == "\x1b":
 
-        return "UP" 
+            key += sys.stdin.read(2)
 
-    if key == "\x1b[B": 
+    finally:
 
-        return "DOWN" 
+        termios.tcsetattr(descriptor, termios.TCSADRAIN, previous_settings)
 
-    return "ENTER" if key in ("\r", "\n") else key 
 
- 
+    if key == "\x1b[A":
 
-def select_option(prompt, options): 
+        return "UP"
 
- 
+    if key == "\x1b[B":
 
-    if not sys.stdin.isatty(): 
+        return "DOWN"
 
-        print(prompt) 
+    return "ENTER" if key in ("\r", "\n") else key
 
-        for index, (label, _) in enumerate(options, start=1): 
 
-            print(f"{index}. {label}") 
+def select_option(prompt, options):
 
-        selection = input("Choose: ").strip() 
 
-        if selection.isdigit() and 1 <= int(selection) <= len(options): 
+    if not sys.stdin.isatty():
 
-            return options[int(selection) - 1][1] 
+        print(prompt)
 
-        return "" 
+        for index, (label, _) in enumerate(options, start=1):
 
- 
+            print(f"{index}. {label}")
 
-    selected = 0 
+        selection = input("Choose: ").strip()
 
-    print(f"{prompt} (Up/Down, Enter)") 
+        if selection.isdigit() and 1 <= int(selection) <= len(options):
 
- 
+            return options[int(selection) - 1][1]
 
-    def render_options(): 
+        return ""
 
-        for index, (label, _) in enumerate(options): 
 
-            marker = ">" if index == selected else " " 
+    selected = 0
 
-            print(f"{marker} {label}") 
+    print(f"{prompt} (use Up/Down + Enter, or press a number)")
 
- 
 
-    render_options() 
+    def render_options():
 
-    while True: 
+        for index, (label, _) in enumerate(options):
 
-        key = read_menu_key() 
+            if index == selected:
 
-        if key == "UP": 
+                print(arcade_text(f">> {index + 1}. {label}", "magenta", bold=True))
 
-            selected = (selected - 1) % len(options) 
+            else:
 
-        elif key == "DOWN": 
+                print(f"   {index + 1}. {label}")
 
-            selected = (selected + 1) % len(options) 
 
-        elif key == "ENTER": 
+    render_options()
 
-            return options[selected][1] 
+    while True:
 
-        else: 
+        key = read_menu_key()
 
-            continue 
+        if key.isdigit() and 1 <= int(key) <= len(options):
 
- 
+            return options[int(key) - 1][1]
 
-        sys.stdout.write(f"\x1b[{len(options)}A") 
+        if key == "UP":
 
-        render_options() 
+            selected = (selected - 1) % len(options)
 
-        sys.stdout.flush() 
+        elif key == "DOWN":
 
- 
+            selected = (selected + 1) % len(options)
 
-def get_choice(prompt, aliases=None, options=None): 
+        elif key == "ENTER":
 
- 
+            return options[selected][1]
 
-    global last_choice, repeated_choice_count, trojan_event_state 
+        else:
 
- 
+            continue
 
-    if options is not None: 
 
-        choice = select_option(prompt, options) 
+        sys.stdout.write(f"\x1b[{len(options)}A")
 
-    else: 
+        render_options()
 
-        choice = input(prompt).strip() 
+        sys.stdout.flush()
 
- 
 
-    choice = choice.strip() 
+def get_choice(prompt, aliases=None, options=None):
 
-    if aliases: 
 
-        choice = aliases.get(choice.lower(), choice) 
+    global last_choice, repeated_choice_count, trojan_event_state
 
- 
 
-    choice_key = choice.lower() 
+    if options is not None:
 
-    if choice_key == last_choice: 
+        choice = select_option(prompt, options)
 
-        repeated_choice_count += 1 
+    else:
 
-    else: 
+        choice = input(prompt).strip()
 
-        last_choice = choice_key 
 
-        repeated_choice_count = 1 
+    choice = choice.strip()
 
- 
+    if aliases:
 
-    if repeated_choice_count < 10: 
+        choice = aliases.get(choice.lower(), choice)
 
-        return choice 
 
- 
+    choice_key = choice.lower()
 
-    repeated_choice_count = 0 
+    if choice_key == last_choice:
 
-    last_choice = None 
+        repeated_choice_count += 1
 
-    print("\n⚠️ Repeating the same choice 10 times triggered the Trojan Horse!") 
+    else:
 
-    if trojan_event_state not in ("warning", "escalation"): 
+        last_choice = choice_key
 
-        trojan_event_state = "warning" 
+        repeated_choice_count = 1
 
-    print("That repeated choice was blocked.") 
 
-    return "" 
+    if repeated_choice_count < 10:
 
-  
+        return choice
 
-  
 
-def clear_line(): 
+    repeated_choice_count = 0
 
-  
+    last_choice = None
 
-    print("\n" + "=" * 60) 
+    print("\n⚠️ Repeating the same choice 10 times triggered the Trojan Horse!")
 
-  
+    if trojan_event_state not in ("warning", "escalation"):
 
-  
+        trojan_event_state = "warning"
 
-# ============================================================ 
+    print("That repeated choice was blocked.")
 
-  
+    return ""
 
-# STATUS 
 
-  
 
-# ============================================================ 
 
-  
+def clear_line():
 
-def show_status(): 
 
-  
+    print("\n" + arcade_text("═" * 60, "cyan", bold=True))
 
-    clear_line() 
+def arcade_text(text, color="cyan", bold=False):
 
-  
+    colors = {
+        "cyan": "96",
+        "green": "92",
+        "yellow": "93",
+        "red": "91",
+        "magenta": "95",
+        "dim": "2",
+        "white": "97",
+    }
 
-    print("                    NETWORK STATUS") 
+    if not sys.stdout.isatty():
 
-  
+        return str(text)
 
-    clear_line() 
+    style = colors.get(color, colors["cyan"])
 
-  
+    if bold:
 
-    print("\n💰 Funding:", funding) 
+        style = f"1;{style}"
 
-  
+    return f"\033[{style}m{text}\033[0m"
 
-    print("🌊 Wave:", wave) 
+def infection_meter(value, width=10):
 
- 
+    filled = round(max(0, min(100, value)) / 100 * width)
 
-    print("🎚️ Difficulty:", difficulty) 
+    color = "red" if value >= 75 else "yellow" if value >= 40 else "green"
 
-  
+    bar = arcade_text("█" * filled, color, bold=True)
 
-    print("🛠️ Recoveries:", recoveries) 
+    bar += arcade_text("░" * (width - filled), "dim")
 
-  
+    return f"[{bar}] {value:3d}%"
 
-    print("\nDEVICES") 
+def infection_label(value):
 
-  
+    if value >= 75:
 
-    for name, data in devices.items(): 
+        return arcade_text("URGENT", "red", bold=True)
 
-  
+    if value >= 40:
 
-        print( 
+        return arcade_text("WATCH", "yellow", bold=True)
 
-  
+    return arcade_text("OK", "green", bold=True)
 
-            f"💻 {name}: " 
+def show_wave_dashboard():
 
-  
+    clear_line()
 
-            f"{data['infection']}% infection | " 
+    print(arcade_text(f"★ CYBER DEFENCE // WAVE {wave} ★", "magenta", bold=True))
 
-  
+    print(arcade_text(f"BUDGET £{funding}  |  RECOVERY KITS {recoveries}  |  LEVEL {difficulty}", "yellow", bold=True))
 
-            f"{data['protection']}% protection" 
+    print("NETWORK  " + infection_meter(infrastructure["Network"]["infection"]))
 
-  
+    print("DATABASE " + infection_meter(database["infection"]))
 
-        ) 
+    clear_line()
 
-  
 
-    print("\nINFRASTRUCTURE") 
 
-  
 
-    for name, data in infrastructure.items(): 
+# ============================================================
 
-  
 
-        print( 
+# STATUS
 
-  
 
-            f"🔴 {name}: " 
+# ============================================================
 
-  
 
-            f"{data['infection']}% infection | " 
+def show_status():
 
-  
 
-            f"{data['protection']}% protection" 
+    clear_line()
 
-  
 
-        ) 
+    print(arcade_text("[ NETWORK STATUS ]", "cyan", bold=True))
 
-  
 
-    print("\nDATABASE") 
+    clear_line()
 
-  
 
-    print( 
+    print(arcade_text(f"\nBUDGET: £{funding}", "yellow", bold=True))
 
-  
 
-        f"☠️ Database: " 
+    print("WAVE:", wave)
 
-  
 
-        f"{database['infection']}% infection | " 
+    print("LEVEL:", difficulty)
 
-  
 
-        f"Level {database['level']} | " 
+    print("RECOVERY KITS:", recoveries)
 
-  
 
-        f"{database['protection']}% protection" 
+    print(arcade_text("\n[ DEVICES ]", "magenta", bold=True))
 
-  
 
-    ) 
+    for name, data in devices.items():
 
-  
 
-    clear_line() 
+        print(
 
-  
 
-  
+            f"💻 {name}: "
 
-# ============================================================ 
 
-  
+            f"{infection_meter(data['infection'])}  {infection_label(data['infection'])} | "
 
-# CURRENT THREATS 
 
-  
+            f"{data['protection']}% protection"
 
-# ============================================================ 
 
-  
+        )
 
-def show_threats(): 
 
-  
+    print(arcade_text("\n[ NETWORK EQUIPMENT ]", "magenta", bold=True))
 
-    clear_line() 
 
-  
+    for name, data in infrastructure.items():
 
-    print("                    CURRENT THREATS") 
 
-  
+        print(
 
-    clear_line() 
 
-  
+            f"🔴 {name}: "
 
-    found = False 
 
-  
+            f"{infection_meter(data['infection'])}  {infection_label(data['infection'])} | "
 
-    for name, data in devices.items(): 
 
-  
+            f"{data['protection']}% protection"
 
-        if data["infection"] > 0: 
 
-  
+        )
 
-            found = True 
 
-  
+    print(arcade_text("\n[ DATABASE ]", "magenta", bold=True))
 
-            print(f"\n🦠 {name}") 
 
-  
+    print(
 
-            print(f"   Infection: {data['infection']}%") 
 
-  
+        f"☠️ Database: "
 
-            if data["infection"] >= 75: 
 
-  
+        f"{infection_meter(database['infection'])}  {infection_label(database['infection'])} | "
 
-                print("   ⚠️ CRITICAL!") 
 
-  
+        f"Level {database['level']} | "
 
-            elif data["infection"] >= 40: 
 
-  
+        f"{database['protection']}% protection"
 
-                print("   ⚠️ HIGH RISK") 
 
-  
+    )
 
-            else: 
 
-  
+    clear_line()
 
-                print("   Malware is spreading.") 
 
-  
 
-    for name, data in infrastructure.items(): 
 
-  
+# ============================================================
 
-        if data["infection"] > 0: 
 
-  
+# CURRENT THREATS
 
-            found = True 
 
-  
+# ============================================================
 
-            print(f"\n🔴 {name}") 
 
-  
+def show_threats():
 
-            print(f"   Infection: {data['infection']}%") 
 
-  
+    clear_line()
 
-            if data["infection"] >= 75: 
 
-  
+    print(arcade_text("[ CURRENT THREATS ]", "red", bold=True))
 
-                print("   ⚠️ CRITICAL!") 
 
-  
+    clear_line()
 
-            else: 
 
-  
+    found = False
 
-                print("   ⚠️ UNDER ATTACK") 
 
-  
+    for name, data in devices.items():
 
-    if database["infection"] > 0: 
 
-  
+        if data["infection"] > 0:
 
-        found = True 
 
-  
+            found = True
 
-        print("\n☠️ DATABASE") 
 
-  
+            print(f"\n🦠 {name}")
 
-        print(f"   Infection: {database['infection']}%") 
 
-  
+            print(f"   Infection: {data['infection']}%")
 
-        if database["infection"] >= 75: 
 
-  
+            if data["infection"] >= 75:
 
-            print("   ⚠️ CRITICAL!") 
 
-  
+                print("   ⚠️ CRITICAL!")
 
-        else: 
 
-  
+            elif data["infection"] >= 40:
 
-            print("   ⚠️ FINAL TARGET UNDER ATTACK") 
 
-  
+                print("   ⚠️ HIGH RISK")
 
-    if not found: 
 
-  
+            else:
 
-        print("\n✅ No active infections.") 
 
-  
+                print("   Malware is spreading.")
 
-    clear_line() 
 
-  
+    for name, data in infrastructure.items():
 
-  
 
-# ============================================================ 
+        if data["infection"] > 0:
 
-  
 
-# DEVICE PROTECTION 
+            found = True
 
-  
 
-# ============================================================ 
+            print(f"\n🔴 {name}")
 
-  
 
-def protect_device(): 
+            print(f"   Infection: {data['infection']}%")
 
-  
 
-    global funding 
+            if data["infection"] >= 75:
 
-  
 
-    print("\nWhich device would you like to protect?") 
+                print("   ⚠️ CRITICAL!")
 
-  
 
-    names = list(devices.keys()) 
+            else:
 
-  
 
-    choice = get_choice( 
+                print("   ⚠️ UNDER ATTACK")
 
-        "\nChoose a device:", 
 
-        options=[(name, str(index)) for index, name in enumerate(names, 1)], 
+    if database["infection"] > 0:
 
-    ) 
 
-  
+        found = True
 
-    if not choice.isdigit(): 
 
-  
+        print("\n☠️ DATABASE")
 
-        print("❌ Invalid choice.") 
 
-  
+        print(f"   Infection: {database['infection']}%")
 
-        return 
 
-  
+        if database["infection"] >= 75:
 
-    choice = int(choice) 
 
-  
+            print("   ⚠️ CRITICAL!")
 
-    if choice < 1 or choice > len(names): 
 
-  
+        else:
 
-        print("❌ Invalid choice.") 
 
-  
+            print("   ⚠️ FINAL TARGET UNDER ATTACK")
 
-        return 
 
-  
+    if not found:
 
-    name = names[choice - 1] 
 
-  
+        print("\n✅ No active infections.")
 
-    if funding < 10: 
 
-  
+    clear_line()
 
-        print("❌ Not enough funding.") 
 
-  
 
-        return 
 
-  
+# ============================================================
 
-    funding -= 10 
 
-  
+# DEVICE PROTECTION
 
-    devices[name]["protection"] += 10 
 
-  
+# ============================================================
 
-    if devices[name]["protection"] > 100: 
 
-  
+def protect_device():
 
-        devices[name]["protection"] = 100 
 
-  
+    global funding
 
-    print(f"\n🛡️ {name} protection increased!") 
 
-  
+    print("\nWhich device would you like to protect?")
 
-    print("Protection:", devices[name]["protection"], "%") 
 
-  
+    names = list(devices.keys())
 
-  
 
-# ============================================================ 
+    choice = get_choice(
 
-  
+        "\nChoose a device:",
 
-# ANTIVIRUS 
+        options=[(name, str(index)) for index, name in enumerate(names, 1)],
 
-  
+    )
 
-# ============================================================ 
 
-  
+    if not choice.isdigit():
 
-def buy_antivirus(): 
 
-  
+        print("❌ Invalid choice.")
 
-    global funding 
 
-  
+        return
 
-    print("\nWhich device needs Antivirus?") 
 
-  
+    choice = int(choice)
 
-    names = list(devices.keys()) 
 
-  
+    if choice < 1 or choice > len(names):
 
-    choice = get_choice( 
 
-        "\nChoose a device:", 
+        print("❌ Invalid choice.")
 
-        options=[(name, str(index)) for index, name in enumerate(names, 1)], 
 
-    ) 
+        return
 
-  
 
-    if not choice.isdigit(): 
+    name = names[choice - 1]
 
-  
 
-        return 
+    if funding < 10:
 
-  
 
-    choice = int(choice) 
+        print("❌ Not enough funding.")
 
-  
 
-    if choice < 1 or choice > len(names): 
+        return
 
-  
 
-        return 
+    funding -= 10
 
-  
 
-    name = names[choice - 1] 
+    devices[name]["protection"] += 10
 
-  
 
-    if devices[name]["antivirus"]: 
+    if devices[name]["protection"] > 100:
 
-  
 
-        print("❌ Antivirus is already installed.") 
+        devices[name]["protection"] = 100
 
-  
 
-        return 
+    print(f"\n🛡️ {name} protection increased!")
 
-  
 
-    if funding < 20: 
+    print("Protection:", devices[name]["protection"], "%")
 
-  
 
-        print("❌ Not enough funding.") 
 
-  
 
-        return 
+# ============================================================
 
-  
 
-    funding -= 20 
+# ANTIVIRUS
 
-  
 
-    devices[name]["antivirus"] = True 
+# ============================================================
 
-  
 
-    print(f"\n🛡️ Antivirus installed on {name}!") 
+def buy_antivirus():
 
-  
 
-  
+    global funding
 
-# ============================================================ 
 
-  
+    print("\nWhich device needs Antivirus?")
 
-# PASSWORD SECURITY 
 
-  
+    names = list(devices.keys())
 
-# ============================================================ 
 
-  
+    choice = get_choice(
 
-def buy_password_security(): 
+        "\nChoose a device:",
 
-  
+        options=[(name, str(index)) for index, name in enumerate(names, 1)],
 
-    global funding 
+    )
 
-  
 
-    print("\nWhich device needs stronger password security?") 
+    if not choice.isdigit():
 
-  
 
-    names = list(devices.keys()) 
+        return
 
-  
 
-    choice = get_choice( 
+    choice = int(choice)
 
-        "\nChoose a device:", 
 
-        options=[(name, str(index)) for index, name in enumerate(names, 1)], 
+    if choice < 1 or choice > len(names):
 
-    ) 
 
-  
+        return
 
-    if not choice.isdigit(): 
 
-  
+    name = names[choice - 1]
 
-        return 
 
-  
+    if devices[name]["antivirus"]:
 
-    choice = int(choice) 
 
-  
+        print("❌ Antivirus is already installed.")
 
-    if choice < 1 or choice > len(names): 
 
-  
+        return
 
-        return 
 
-  
+    if funding < 20:
 
-    name = names[choice - 1] 
 
-  
+        print("❌ Not enough funding.")
 
-    if devices[name]["password"]: 
 
-  
+        return
 
-        print("❌ Strong password security already active.") 
 
-  
+    funding -= 20
 
-        return 
 
-  
+    devices[name]["antivirus"] = True
 
-    if funding < 15: 
 
-  
+    print(f"\n🛡️ Antivirus installed on {name}!")
 
-        print("❌ Not enough funding.") 
 
-  
 
-        return 
 
-  
+# ============================================================
 
-    funding -= 15 
 
-  
+# PASSWORD SECURITY
 
-    devices[name]["password"] = True 
 
-  
+# ============================================================
 
-    print(f"\n🔐 Strong password security added to {name}!") 
 
-  
+def buy_password_security():
 
-  
 
-# ============================================================ 
+    global funding
 
-  
 
-# DATABASE UPGRADE 
+    print("\nWhich device needs stronger password security?")
 
-  
 
-# ============================================================ 
+    names = list(devices.keys())
 
-  
 
-def upgrade_database(): 
+    choice = get_choice(
 
-  
+        "\nChoose a device:",
 
-    global funding 
+        options=[(name, str(index)) for index, name in enumerate(names, 1)],
 
-  
+    )
 
-    if database["level"] >= 5: 
 
-  
+    if not choice.isdigit():
 
-        print("\n❌ Database is already at maximum level.") 
 
-  
+        return
 
-        return 
 
-  
+    choice = int(choice)
 
-    cost = database["level"] * 50 
 
-  
+    if choice < 1 or choice > len(names):
 
-    print("\nDATABASE UPGRADE") 
 
-  
+        return
 
-    print("Current Level:", database["level"]) 
 
-  
+    name = names[choice - 1]
 
-    print("Upgrade Cost: £", cost) 
 
-  
+    if devices[name]["password"]:
 
-    choice = get_choice("\nUpgrade database? (y/n): ") 
 
-  
+        print("❌ Strong password security already active.")
 
-    if choice.lower() != "y": 
 
-  
+        return
 
-        return 
 
-  
+    if funding < 15:
 
-    if funding < cost: 
 
-  
+        print("❌ Not enough funding.")
 
-        print("❌ Not enough funding.") 
 
-  
+        return
 
-        return 
 
-  
+    funding -= 15
 
-    funding -= cost 
 
-  
+    devices[name]["password"] = True
 
-    database["level"] += 1 
 
-  
+    print(f"\n🔐 Strong password security added to {name}!")
 
-    database["protection"] += 15 
 
-  
 
-    if database["protection"] > 75: 
 
-  
+# ============================================================
 
-        database["protection"] = 75 
 
-  
+# DATABASE UPGRADE
 
-    print("\n⬆️ Database upgraded!") 
 
-  
+# ============================================================
 
-    print("New Level:", database["level"]) 
 
-  
+def upgrade_database():
 
-    print("Protection:", database["protection"], "%") 
 
-  
+    global funding
 
-  
 
-# ============================================================ 
+    if database["level"] >= 5:
 
-  
 
-# BACKUP DATABASE 
+        print("\n❌ Database is already at maximum level.")
 
-  
 
-# ============================================================ 
+        return
 
-  
 
-def backup_database(): 
+    cost = database["level"] * 50
 
-  
 
-    global funding 
+    print("\nDATABASE UPGRADE")
 
-  
 
-    global backup_available 
+    print("Current Level:", database["level"])
 
-  
 
-    global backup_used 
+    print("Upgrade Cost: £", cost)
 
-  
 
-    if wave < 5: 
+    choice = get_choice("\nUpgrade database? (y/n): ")
 
-  
 
-        print("\n🔒 Backup Database unlocks at Wave 5.") 
+    if choice.lower() != "y":
 
-  
 
-        return 
+        return
 
-  
 
-    if backup_used: 
+    if funding < cost:
 
-  
 
-        print("\n❌ Backup Database has already been used.") 
+        print("❌ Not enough funding.")
 
-  
 
-        return 
+        return
 
-  
 
-    cost = 450 
+    funding -= cost
 
-  
 
-    print("\n💾 BACKUP DATABASE") 
+    database["level"] += 1
 
-  
 
-    print("Cost: £450") 
+    database["protection"] += 15
 
-  
 
-    print("One use per game.") 
+    if database["protection"] > 75:
 
-  
 
-    print("If the main database becomes critically infected,") 
+        database["protection"] = 75
 
-  
 
-    print("the backup can restore it to 25% infection.") 
+    print("\n⬆️ Database upgraded!")
 
-  
 
-    choice = get_choice("\nPurchase Backup Database? (y/n): ") 
+    print("New Level:", database["level"])
 
-  
 
-    if choice.lower() != "y": 
+    print("Protection:", database["protection"], "%")
 
-  
 
-        return 
 
-  
 
-    if funding < cost: 
+# ============================================================
 
-  
 
-        print("❌ Not enough funding.") 
+# BACKUP DATABASE
 
-  
 
-        return 
+# ============================================================
 
-  
 
-    funding -= cost 
+def backup_database():
 
-  
 
-    backup_available = True 
+    global funding
 
-  
 
-    print("\n💾 Backup Database prepared!") 
+    global backup_available
 
-  
 
-  
+    global backup_used
 
-# ============================================================ 
 
-  
+    if wave < 5:
 
-# DEVICE RECOVERY 
 
-  
+        print("\n🔒 Backup Database unlocks at Wave 5.")
 
-# ============================================================ 
 
-  
+        return
 
-def recover_device(): 
 
-  
+    if backup_used:
 
-    global recoveries 
 
-  
+        print("\n❌ Backup Database has already been used.")
 
-    available = [] 
 
-  
+        return
 
-    for name, data in devices.items(): 
 
-  
+    cost = 450
 
-        if data["infection"] >= 100: 
 
-  
+    print("\n💾 BACKUP DATABASE")
 
-            available.append(name) 
 
-  
+    print("Cost: £450")
 
-    if not available: 
 
-  
+    print("One use per game.")
 
-        print("\n❌ No fully compromised devices need recovery.") 
 
-  
+    print("If the main database becomes critically infected,")
 
-        return 
 
-  
+    print("the backup can restore it to 25% infection.")
 
-    if recoveries <= 0: 
 
-  
+    choice = get_choice("\nPurchase Backup Database? (y/n): ")
 
-        print("\n❌ You have no recoveries remaining.") 
 
-  
+    if choice.lower() != "y":
 
-        return 
 
-  
+        return
 
-    print("\nCOMPROMISED DEVICES") 
 
-  
+    if funding < cost:
 
-    choice = get_choice( 
 
-        "\nChoose device to recover:", 
+        print("❌ Not enough funding.")
 
-        options=[(name, str(index)) for index, name in enumerate(available, 1)], 
 
-    ) 
+        return
 
-  
 
-    if not choice.isdigit(): 
+    funding -= cost
 
-  
 
-        return 
+    backup_available = True
 
-  
 
-    choice = int(choice) 
+    print("\n💾 Backup Database prepared!")
 
-  
 
-    if choice < 1 or choice > len(available): 
 
-  
 
-        return 
+# ============================================================
 
-  
 
-    name = available[choice - 1] 
+# DEVICE RECOVERY
 
-  
 
-    devices[name]["infection"] = 0 
+# ============================================================
 
-  
 
-    devices[name]["protection"] = 0 
+def recover_device():
 
-  
 
-    devices[name]["antivirus"] = False 
+    global recoveries
 
-  
 
-    devices[name]["password"] = False 
+    available = []
 
-  
 
-    recoveries -= 1 
+    for name, data in devices.items():
 
-  
 
-    print(f"\n🛠️ {name} has been recovered!") 
+        if data["infection"] >= 100:
 
-  
 
-    print("⚠️ All security upgrades on that device were lost.") 
+            available.append(name)
 
-  
 
-    print("Recoveries remaining:", recoveries) 
+    if not available:
 
-  
 
-  
+        print("\n❌ No fully compromised devices need recovery.")
 
-# ============================================================ 
 
-  
+        return
 
-# INFRASTRUCTURE RECOVERY 
 
-  
+    if recoveries <= 0:
 
-# ============================================================ 
 
-  
+        print("\n❌ You have no recoveries remaining.")
 
-def recover_infrastructure(): 
 
-  
+        return
 
-    global recoveries 
 
-  
+    print("\nCOMPROMISED DEVICES")
 
-    available = [] 
 
-  
+    choice = get_choice(
 
-    for name, data in infrastructure.items(): 
+        "\nChoose device to recover:",
 
-  
+        options=[(name, str(index)) for index, name in enumerate(available, 1)],
 
-        if data["infection"] >= 100: 
+    )
 
-  
 
-            available.append(name) 
+    if not choice.isdigit():
 
-  
 
-    if not available: 
+        return
 
-  
 
-        print("\n❌ No compromised infrastructure requires recovery.") 
+    choice = int(choice)
 
-  
 
-        return 
+    if choice < 1 or choice > len(available):
 
-  
 
-    if recoveries <= 0: 
+        return
 
-  
 
-        print("\n❌ No recoveries remaining.") 
+    name = available[choice - 1]
 
-  
 
-        return 
+    devices[name]["infection"] = 0
 
-  
 
-    print("\nCOMPROMISED INFRASTRUCTURE") 
+    devices[name]["protection"] = 0
 
-  
 
-    choice = get_choice( 
+    devices[name]["antivirus"] = False
 
-        "\nChoose infrastructure to recover:", 
 
-        options=[(name, str(index)) for index, name in enumerate(available, 1)], 
+    devices[name]["password"] = False
 
-    ) 
 
-  
+    recoveries -= 1
 
-    if not choice.isdigit(): 
 
-  
+    print(f"\n🛠️ {name} has been recovered!")
 
-        return 
 
-  
+    print("⚠️ All security upgrades on that device were lost.")
 
-    choice = int(choice) 
 
-  
+    print("Recoveries remaining:", recoveries)
 
-    if choice < 1 or choice > len(available): 
 
-  
 
-        return 
 
-  
+# ============================================================
 
-    name = available[choice - 1] 
 
-  
+# INFRASTRUCTURE RECOVERY
 
-    infrastructure[name]["infection"] = 0 
 
-  
+# ============================================================
 
-    infrastructure[name]["protection"] = 0 
 
-  
+def recover_infrastructure():
 
-    recoveries -= 1 
 
-  
+    global recoveries
 
-    print(f"\n🛠️ {name} has been recovered!") 
 
-  
+    available = []
 
-  
 
-# ============================================================ 
+    for name, data in infrastructure.items():
 
-  
 
-# PHISHING EMAIL 
+        if data["infection"] >= 100:
 
-  
 
-# ============================================================ 
+            available.append(name)
 
-  
 
-def phishing_email(): 
+    if not available:
 
-  
 
-    global recoveries 
+        print("\n❌ No compromised infrastructure requires recovery.")
 
-  
 
-    print("\n" + "=" * 60) 
+        return
 
-  
 
-    print("📧 NEW EMAIL") 
+    if recoveries <= 0:
 
-  
 
-    print("=" * 60) 
+        print("\n❌ No recoveries remaining.")
 
-  
 
-    print("\nFrom: System Developers") 
+        return
 
-  
 
-    print("Subject: IMPORTANT SECURITY UPDATE") 
+    print("\nCOMPROMISED INFRASTRUCTURE")
 
-  
 
-    print("\nYour account requires immediate verification.") 
+    choice = get_choice(
 
-  
+        "\nChoose infrastructure to recover:",
 
-    print("Click the link below to continue.") 
+        options=[(name, str(index)) for index, name in enumerate(available, 1)],
 
-  
+    )
 
-    choice = get_choice( 
 
-        "\nChoose:", 
+    if not choice.isdigit():
 
-        options=[("Open the email", "1"), ("Ignore/report the email", "2")], 
 
-    ) 
+        return
 
-  
 
-    if choice == "1": 
+    choice = int(choice)
 
-  
 
-        print("\n⚠️ PHISHING ATTACK!") 
+    if choice < 1 or choice > len(available):
 
-  
 
-        print("The email was malicious.") 
+        return
 
-  
 
-        target = random.choice(list(devices.keys())) 
+    name = available[choice - 1]
 
-  
 
-        threat = random.choice(["Virus", "Trojan Horse"]) 
+    infrastructure[name]["infection"] = 0
 
-  
 
-        devices[target]["infection"] += 5 
+    infrastructure[name]["protection"] = 0
 
-  
 
-        devices[target]["infection"] = min( 
+    recoveries -= 1
 
-            100, devices[target]["infection"] 
 
-        ) 
+    print(f"\n🛠️ {name} has been recovered!")
 
-  
 
-        print(f"\n🦠 {threat} detected on {target}!") 
 
-  
 
-        print("Infection +5%.") 
+# ============================================================
 
-  
 
-    elif choice == "2": 
+# PHISHING EMAIL
 
-  
 
-        recoveries += 1 
+# ============================================================
 
-  
 
-        print("\n✅ Correct!") 
+def phishing_email():
 
-  
 
-        print("The email was phishing.") 
+    global recoveries
 
-  
 
-        print("🛠️ +1 Recovery") 
+    print("\n" + "=" * 60)
 
-  
 
-  
+    print("📧 NEW EMAIL")
 
-# ============================================================ 
 
-  
+    print("=" * 60)
 
-# LEGITIMATE DEVELOPER EMAIL 
 
-  
+    print("\nFrom: System Developers")
 
-# ============================================================ 
 
-  
+    print("Subject: IMPORTANT SECURITY UPDATE")
 
-def legitimate_email(): 
 
-  
+    print("\nYour account requires immediate verification.")
 
-    print("\n" + "=" * 60) 
 
-  
+    print("Click the link below to continue.")
 
-    print("📧 DEVELOPER MESSAGE") 
 
-  
+    while True:
 
-    print("=" * 60) 
 
-  
+        choice = get_choice(
 
-    print("\nFrom: Cyber Defence Development Team") 
 
-  
+            "\nChoose:",
 
-    print("Subject: Network Security Update") 
 
-  
+            options=[("Open the email", "1"), ("Ignore/report the email", "2")],
 
-    print("\nWe've been monitoring the current build.") 
 
-  
+        )
 
-    print("Keep an eye on devices with rising infection levels.") 
 
-  
+        if choice in ("1", "2"):
 
-    print("\n💡 Developer Tip:") 
 
-  
+            break
 
-    print("Don't put all of your funding into one device.") 
 
-  
+        print("❌ Please choose 1 or 2.")
 
-    pause() 
 
-  
+    if choice == "1":
 
-  
 
-# ============================================================ 
+        print("\n⚠️ PHISHING ATTACK!")
 
-  
 
-# LIAM EMAIL 
+        print("The email was malicious.")
 
-  
 
-# ============================================================ 
+        target = random.choice(list(devices.keys()))
 
-  
 
-def liam_email(): 
+        threat = random.choice(["Virus", "Trojan Horse"])
 
-  
 
-    global funding 
+        devices[target]["infection"] += 5
 
-  
 
-    global recoveries 
+        devices[target]["infection"] = min(
 
-  
+            100, devices[target]["infection"]
 
-    print("\n" + "=" * 60) 
+        )
 
-  
 
-    print("📧 OPERATIONS MESSAGE") 
+        print(f"\n🦠 {threat} detected on {target}!")
 
-  
 
-    print("=" * 60) 
+        print("Infection +5%.")
 
-  
 
-    print("\nFrom: Liam — Head of Operations") 
+    elif choice == "2":
 
-  
 
-    print("Subject: 🛡️ Operations Support") 
+        recoveries += 1
 
-  
 
-    print("\nHey Commander,") 
+        print("\n✅ Correct!")
 
-  
 
-    print("\nI've been keeping an eye on how things are going.") 
+        print("The email was phishing.")
 
-  
 
-    print("I've authorised some additional resources for you.") 
+        print("🛠️ +1 Recovery")
 
-  
 
-    funding += 50 
 
-  
 
-    recoveries += 3 
+# ============================================================
 
-  
 
-    print("\n🎁 +3 Recoveries") 
+# LEGITIMATE DEVELOPER EMAIL
 
-  
 
-    print("💰 +£50 Funding") 
+# ============================================================
 
-  
 
-    print("\n💡 Tip from Operations:") 
+def legitimate_email():
 
-  
 
-    print("Don't put everything into protecting one device.") 
+    print("\n" + "=" * 60)
 
-  
 
-    print("A strong network means keeping everything covered.") 
+    print("📧 DEVELOPER MESSAGE")
 
-  
 
-    print("\n— Liam") 
+    print("=" * 60)
 
-  
 
-    print("Head of Operations") 
+    print("\nFrom: Cyber Defence Development Team")
 
-  
 
-    pause() 
+    print("Subject: Network Security Update")
 
-  
 
-  
+    print("\nWe've been monitoring the current build.")
 
-# ============================================================ 
 
-  
+    print("Keep an eye on devices with rising infection levels.")
 
-# WILL EMAIL 
 
-  
+    print("\n💡 Developer Tip:")
 
-# ============================================================ 
 
-  
+    print("Don't put all of your funding into one device.")
 
-def will_email(): 
 
-  
+    pause()
 
-    global recoveries 
 
-  
 
-    print("\n" + "=" * 60) 
 
-  
+# ============================================================
 
-    print("📧 TESTING REPORT") 
 
-  
+# LIAM EMAIL
 
-    print("=" * 60) 
 
-  
+# ============================================================
 
-    print("\nFrom: Will — Testing & Feedback") 
 
-  
+def liam_email():
 
-    print("Subject: 🧪 Quick Testing Report") 
 
-  
+    global funding
 
-    print("\nHey Commander,") 
 
-  
+    global recoveries
 
-    print("\nI've been testing the current build.") 
 
-  
+    print("\n" + "=" * 60)
 
-    print("Your network is starting to show some weaknesses.") 
 
-  
+    print("📧 OPERATIONS MESSAGE")
 
-    recoveries += 1 
 
-  
+    print("=" * 60)
 
-    print("\n🛠️ +1 Recovery") 
 
-  
+    print("\nFrom: Liam — Head of Operations")
 
-    print("\n💡 Tester Tip:") 
 
-  
+    print("Subject: 🛡️ Operations Support")
 
-    print("Just because an infection is low doesn't mean") 
 
-  
+    print("\nHey Commander,")
 
-    print("you should completely ignore it.") 
 
-  
+    print("\nI've been keeping an eye on how things are going.")
 
-    print("\n— Will") 
 
-  
+    print("I've authorised some additional resources for you.")
 
-    print("Testing & Feedback") 
 
-  
+    funding += 50
 
-    pause() 
 
-  
+    recoveries += 3
 
-  
 
-# ============================================================ 
+    print("\n🎁 +3 Recoveries")
 
-  
 
-# EMAIL SYSTEM 
+    print("💰 +£50 Funding")
 
-  
 
-# ============================================================ 
+    print("\n💡 Tip from Operations:")
 
-  
 
-def receive_email(): 
+    print("Don't put everything into protecting one device.")
 
-  
 
-    roll = random.randint(1, 100) 
+    print("A strong network means keeping everything covered.")
 
-  
 
-    if roll <= 8: 
+    print("\n— Liam")
 
-  
 
-        liam_email() 
+    print("Head of Operations")
 
-  
 
-    elif roll <= 30: 
+    pause()
 
-  
 
-        will_email() 
 
-  
 
-    elif roll <= 50: 
+# ============================================================
 
-  
 
-        legitimate_email() 
+# WILL EMAIL
 
-  
 
-    else: 
+# ============================================================
 
-  
 
-        phishing_email() 
+def will_email():
 
-  
 
-  
+    global recoveries
 
-# ============================================================ 
 
-  
+    print("\n" + "=" * 60)
 
-# DEVELOPER ASSISTANCE 
 
-  
+    print("📧 TESTING REPORT")
 
-# ============================================================ 
 
-  
+    print("=" * 60)
 
-def developer_assistance(): 
 
-  
+    print("\nFrom: Will — Testing & Feedback")
 
-    global liam_assistance 
 
-  
+    print("Subject: 🧪 Quick Testing Report")
 
-    global will_assistance 
 
-  
+    print("\nHey Commander,")
 
-    global liam_advice_turns 
 
-  
+    print("\nI've been testing the current build.")
 
-    global will_advice_turns 
 
-  
+    print("Your network is starting to show some weaknesses.")
 
-    print("\n" + "=" * 60) 
 
-  
+    recoveries += 1
 
-    print("🆘 DEVELOPER ASSISTANCE") 
 
-  
+    print("\n🛠️ +1 Recovery")
 
-    print("=" * 60) 
 
-  
+    print("\n💡 Tester Tip:")
 
-    choices = [("Liam - Head of Operations", "1")] 
 
-  
+    print("Just because an infection is low doesn't mean")
 
-    if not liam_assistance: 
 
-  
+    print("you should completely ignore it.")
 
-        choices[0] = ("Liam - Head of Operations (already used)", "1") 
 
-  
+    print("\n— Will")
 
-    choices.append(("Will - Testing & Feedback", "2")) 
 
-  
+    print("Testing & Feedback")
 
-    if not will_assistance: 
 
-  
+    pause()
 
-        choices[1] = ("Will - Testing & Feedback (already used)", "2") 
 
- 
 
-    choice = get_choice("\nChoose assistance:", options=choices) 
 
-  
+# ============================================================
 
-    if choice == "1" and liam_assistance: 
 
-  
+# EMAIL SYSTEM
 
-        liam_assistance = False 
 
-  
+# ============================================================
 
-        liam_advice_turns = 3 
 
-  
+def receive_email():
 
-        print("\n🛡️ LIAM'S ADVICE") 
 
-  
+    roll = random.randint(1, 100)
 
-        print("\nFocus on your weakest devices first.") 
 
-  
+    if roll <= 8:
 
-        print("Don't overspend on a single device.") 
 
-  
+        liam_email()
 
-        print("Keep some funding available for emergencies.") 
 
-  
+    elif roll <= 30:
 
-        print("Your database becomes especially important later.") 
 
-  
+        will_email()
 
-    elif choice == "2" and will_assistance: 
 
-  
+    elif roll <= 50:
 
-        will_assistance = False 
 
-  
+        legitimate_email()
 
-        will_advice_turns = 3 
 
-  
+    else:
 
-        weakest = min( 
 
-  
+        phishing_email()
 
-            devices, 
 
-  
 
-            key=lambda x: devices[x]["infection"] 
 
-  
+# ============================================================
 
-        ) 
 
-  
+# DEVELOPER ASSISTANCE
 
-        print("\n🧪 WILL'S ADVICE") 
 
-  
+# ============================================================
 
-        print("\nI'd keep an eye on:", weakest) 
 
-  
+def developer_assistance():
 
-        print("Check your Current Threats regularly.") 
 
-  
+    global liam_assistance
 
-        print("Small problems are easier to handle than major ones.") 
 
-  
+    global will_assistance
 
-    else: 
 
-  
+    global liam_advice_turns
 
-        print("\n❌ Assistance unavailable.") 
 
-  
+    global will_advice_turns
 
-  
 
-# ============================================================ 
+    print("\n" + "=" * 60)
 
-  
 
-# MALWARE ATTACK 
+    print("🆘 DEVELOPER ASSISTANCE")
 
-  
 
-# ============================================================ 
+    print("=" * 60)
 
-  
 
-def malware_attack(): 
+    choices = [("Liam - Head of Operations", "1")]
 
-  
 
-    global active_threats 
+    if not liam_assistance:
 
- 
 
-    settings = DIFFICULTY_SETTINGS[difficulty] 
+        choices[0] = ("Liam - Head of Operations (already used)", "1")
 
-  
 
-    active_threats = [] 
+    choices.append(("Will - Testing & Feedback", "2"))
 
-  
 
-    for name, data in devices.items(): 
+    if not will_assistance:
 
-  
 
-        if data["infection"] > 0: 
+        choices[1] = ("Will - Testing & Feedback (already used)", "2")
 
-  
 
-            increase = settings["device_growth"] 
+    choice = get_choice("\nChoose assistance:", options=choices)
 
-  
 
-            if data["antivirus"]: 
+    if choice == "1" and liam_assistance:
 
-  
 
-                increase -= 3 
+        liam_assistance = False
 
-  
 
-            increase -= data["protection"] // 25 
+        liam_advice_turns = 3
 
-  
 
-            if data["password"]: 
+        print("\n🛡️ LIAM'S ADVICE")
 
-  
 
-                increase -= 1 
+        print("\nFocus on your weakest devices first.")
 
-  
 
-            increase = max(1, increase) 
+        print("Don't overspend on a single device.")
 
-            data["infection"] = min(100, data["infection"] + increase) 
 
-  
+        print("Keep some funding available for emergencies.")
 
-        else: 
 
-  
+        print("Your database becomes especially important later.")
 
-            infection_chance = settings["infection_chance"] 
 
-  
+    elif choice == "2" and will_assistance:
 
-            infection_chance -= data["protection"] // 10 
 
-  
+        will_assistance = False
 
-            if data["password"]: 
 
-  
+        will_advice_turns = 3
 
-                infection_chance -= 3 
 
-  
+        weakest = min(
 
-            infection_chance = max(3, infection_chance) 
 
-  
+            devices,
 
-            chance = random.randint(1, 100) 
 
-  
+            key=lambda x: devices[x]["infection"]
 
-            if chance <= infection_chance: 
 
-  
+        )
 
-                data["infection"] = 5 
 
-  
+        print("\n🧪 WILL'S ADVICE")
 
-                print("\n" + "!" * 60) 
 
-  
+        print("\nI'd keep an eye on:", weakest)
 
-                print("⚠️ NEW MALWARE DETECTED!") 
 
-  
+        print("Check your Current Threats regularly.")
 
-                print(f"🦠 A threat has appeared on {name}!") 
 
-  
+        print("Small problems are easier to handle than major ones.")
 
-                print("Infection: 5%") 
 
-  
+    else:
 
-                print("!" * 60) 
 
-  
+        print("\n❌ Assistance unavailable.")
 
-                active_threats.append(name) 
 
-  
 
-    # -------------------------------------------------------- 
 
-    # INFRASTRUCTURE CHAIN 
+# ============================================================
 
-    # -------------------------------------------------------- 
 
-  
+# MALWARE ATTACK
 
-    global restart_waves_remaining 
 
-  
+# ============================================================
 
-    if restart_waves_remaining > 0: 
 
-        router_switch_growth = 3 
+def malware_attack():
 
-        network_database_growth = 2 
 
-    else: 
+    global active_threats
 
-        router_switch_growth = settings["infrastructure_growth"] 
 
-        network_database_growth = settings["infrastructure_growth"] 
+    settings = DIFFICULTY_SETTINGS[difficulty]
 
-  
 
-    all_devices_infected = all( 
+    active_threats = []
 
-        data["infection"] >= 100 
 
-        for data in devices.values() 
+    for name, data in devices.items():
 
-    ) 
 
-  
+        if data["infection"] > 0:
 
-    if all_devices_infected: 
 
-        router = infrastructure["Router"] 
+            increase = settings["device_growth"]
 
-        router["infection"] = min( 
 
-            100, router["infection"] + router_switch_growth 
+            if data["antivirus"]:
 
-        ) 
 
-  
+                increase -= 3
 
-    if infrastructure["Router"]["infection"] >= 100: 
 
-        switch = infrastructure["Switch"] 
+            increase -= data["protection"] // 25
 
-        switch["infection"] = min( 
 
-            100, switch["infection"] + router_switch_growth 
+            if data["password"]:
 
-        ) 
 
-  
+                increase -= 1
 
-    if infrastructure["Switch"]["infection"] >= 100: 
 
-        network = infrastructure["Network"] 
+            increase = max(1, increase)
 
-        network["infection"] = min( 
+            data["infection"] = min(100, data["infection"] + increase)
 
-            100, network["infection"] + network_database_growth 
 
-        ) 
+        else:
 
-  
 
-    if infrastructure["Network"]["infection"] >= 100: 
+            infection_chance = settings["infection_chance"]
 
-        database_increase = max( 
 
-            1, network_database_growth - database["protection"] // 20 
+            infection_chance -= data["protection"] // 10
 
-        ) 
 
-        database["infection"] = min( 
+            if data["password"]:
 
-            100, database["infection"] + database_increase 
 
-        ) 
+                infection_chance -= 3
 
-  
 
-    if restart_waves_remaining > 0: 
+            infection_chance = max(3, infection_chance)
 
-        restart_waves_remaining -= 1 
 
-        if restart_waves_remaining == 0: 
+            chance = random.randint(1, 100)
 
-            print("\n⚠️ Emergency Network Restart protection has expired.") 
 
-        else: 
+            if chance <= infection_chance:
 
-            print("\n🛡️ Emergency restart protection: 1 wave remaining.") 
 
-  
+                data["infection"] = 5
 
-  
 
-# ============================================================ 
+                print("\n" + "!" * 60)
 
-  
 
-# FUNDING 
+                print("⚠️ NEW MALWARE DETECTED!")
 
-  
 
-# ============================================================ 
+                print(f"🦠 A threat has appeared on {name}!")
 
-  
 
-def generate_funding(): 
+                print("Infection: 5%")
 
-  
 
-    global funding 
+                print("!" * 60)
 
-  
 
-    total_protection = sum( 
+                active_threats.append(name)
 
-  
 
-        data["protection"] 
+    # --------------------------------------------------------
 
-  
+    # INFRASTRUCTURE CHAIN
 
-        for data in devices.values() 
+    # --------------------------------------------------------
 
-  
 
-    ) 
+    global restart_waves_remaining
 
-  
 
-    average_protection = total_protection / len(devices) 
+    if restart_waves_remaining > 0:
 
-  
+        router_switch_growth = 3
 
-    device_income = int(average_protection / 10) 
+        network_database_growth = 2
 
-  
+    else:
 
-    database_income = database["level"] * 5 
+        router_switch_growth = settings["infrastructure_growth"]
 
-  
+        network_database_growth = settings["infrastructure_growth"]
 
-    funding += device_income + database_income 
 
-  
+    all_devices_infected = all(
 
-    if funding < 10: 
+        data["infection"] >= 100
 
-  
+        for data in devices.values()
 
-        print("\n⚠️ EMERGENCY FUNDING") 
+    )
 
-  
 
-        print("Your organisation has exhausted its available funds.") 
+    if all_devices_infected:
 
-  
+        router = infrastructure["Router"]
 
-        print("Emergency support has been authorised.") 
+        router["infection"] = min(
 
-  
+            100, router["infection"] + router_switch_growth
 
-        print("💰 +£10 Funding") 
+        )
 
-  
 
-        funding += 10 
+    if infrastructure["Router"]["infection"] >= 100:
 
-  
+        switch = infrastructure["Switch"]
 
-  
+        switch["infection"] = min(
 
-# ============================================================ 
+            100, switch["infection"] + router_switch_growth
 
-  
+        )
 
-# DATABASE GAME OVER / BACKUP 
 
-  
+    if infrastructure["Switch"]["infection"] >= 100:
 
-# ============================================================ 
+        network = infrastructure["Network"]
 
-  
+        network["infection"] = min(
 
-def emergency_network_restart(): 
+            100, network["infection"] + network_database_growth
 
-    global restart_available 
+        )
 
-    global restart_waves_remaining 
 
-  
+    if infrastructure["Network"]["infection"] >= 100:
 
-    if not restart_available: 
+        database_increase = max(
 
-        return False 
+            1, network_database_growth - database["protection"] // 20
 
-  
+        )
 
-    print("\n" + "🚨" * 20) 
+        database["infection"] = min(
 
-    print("        EMERGENCY NETWORK RESTART") 
+            100, database["infection"] + database_increase
 
-    print("🚨" * 20) 
+        )
 
-    print("\nThe Database has reached 100% infection.") 
 
-    print("The Emergency Network Restart can save the network once.") 
+    if restart_waves_remaining > 0:
 
-    print("\nThis will reset:") 
+        restart_waves_remaining -= 1
 
-    print("• Router infection → 0%") 
+        if restart_waves_remaining == 0:
 
-    print("• Switch infection → 0%") 
+            print("\n⚠️ Emergency Network Restart protection has expired.")
 
-    print("• Network infection → 0%") 
+        else:
 
-    print("• Database infection → 0%") 
+            print("\n🛡️ Emergency restart protection: 1 wave remaining.")
 
-    print("• Reduced infrastructure growth for the next 2 waves.") 
 
-    print("• Your current wave and device progress stay intact.") 
 
-  
 
-    choice = get_choice("\nActivate Emergency Network Restart? (y/n): ") 
+# ============================================================
 
-    if choice.lower() != "y": 
 
-        print("\n❌ Emergency Network Restart declined.") 
+# FUNDING
 
-        return False 
 
-  
+# ============================================================
 
-    infrastructure["Router"]["infection"] = 0 
 
-    infrastructure["Switch"]["infection"] = 0 
+def generate_funding():
 
-    infrastructure["Network"]["infection"] = 0 
 
-    database["infection"] = 0 
+    global funding
 
-    restart_available = False 
 
-    restart_waves_remaining = 2 
+    total_protection = sum(
 
-  
 
-    print("\n🛡️ EMERGENCY NETWORK RESTART ACTIVATED!") 
+        data["protection"]
 
-    print("Router: 0%") 
 
-    print("Switch: 0%") 
+        for data in devices.values()
 
-    print("Network: 0%") 
 
-    print("Database: 0%") 
+    )
 
-    print(f"\n🌊 You remain on Wave {wave}.") 
 
-    print("⚡ Reduced infrastructure growth will last for the next 2 waves.") 
+    average_protection = total_protection / len(devices)
 
-    return True 
 
-  
+    device_income = int(average_protection / 10)
 
-  
 
-def check_database(): 
+    database_income = database["level"] * 5
 
-    global backup_used 
 
-  
+    funding += device_income + database_income
 
-    if database["infection"] < 100: 
 
-        return False 
+    if funding < 10:
 
-  
 
-    print("\n" + "☠️" * 20) 
+        print("\n⚠️ EMERGENCY FUNDING")
 
-    print("             DATABASE COMPROMISED") 
 
-    print("☠️" * 20) 
+        print("Your organisation has exhausted its available funds.")
 
-  
 
-    if backup_available and not backup_used: 
+        print("Emergency support has been authorised.")
 
-        print("\n💾 BACKUP DATABASE AVAILABLE") 
 
-        choice = get_choice("\nActivate Backup Database? (y/n): ") 
+        print("💰 +£10 Funding")
 
-        if choice.lower() == "y": 
 
-            database["infection"] = 25 
+        funding += 10
 
-            backup_used = True 
 
-            print("\n💾 BACKUP ACTIVATED!") 
 
-            print("Database restored to 25% infection.") 
 
-            return False 
+# ============================================================
 
-  
 
-    if restart_available and emergency_network_restart(): 
+# DATABASE GAME OVER / BACKUP
 
-        return False 
 
-  
+# ============================================================
 
-    print("\n❌ GAME OVER") 
 
-    print("Your database has been completely compromised.") 
+def emergency_network_restart():
 
-    return True 
+    global restart_available
 
- 
+    global restart_waves_remaining
 
-LEADERBOARD_PATH = Path(__file__).with_name("leaderboard.json") 
 
- 
+    if not restart_available:
 
-def record_leaderboard_score(): 
+        return False
 
- 
 
-    score = max(0, wave - 1) 
+    print("\n" + "🚨" * 20)
 
-    name = input("\nEnter your name for the leaderboard: ").strip() 
+    print("        EMERGENCY NETWORK RESTART")
 
-    if not name: 
+    print("🚨" * 20)
 
-        name = "Commander" 
+    print("\nThe Database has reached 100% infection.")
 
- 
+    print("The Emergency Network Restart can save the network once.")
 
-    try: 
+    print("\nThis will reset:")
 
-        contents = LEADERBOARD_PATH.read_text(encoding="utf-8") 
+    print("• Router infection → 0%")
 
-    except FileNotFoundError: 
+    print("• Switch infection → 0%")
 
-        leaderboards = {level: [] for level in DIFFICULTY_SETTINGS} 
+    print("• Network infection → 0%")
 
-    except OSError: 
+    print("• Database infection → 0%")
 
-        print("\n⚠️ The leaderboard could not be read or saved.") 
+    print("• Reduced infrastructure growth for the next 2 waves.")
 
-        return 
+    print("• Your current wave and device progress stay intact.")
 
-    else: 
 
-        try: 
+    choice = get_choice("\nActivate Emergency Network Restart? (y/n): ")
 
-            leaderboard = json.loads(contents) 
+    if choice.lower() != "y":
 
-        except json.JSONDecodeError: 
+        print("\n❌ Emergency Network Restart declined.")
 
-            print("\n⚠️ The leaderboard file is invalid; your score was not saved.") 
+        return False
 
-            return 
 
- 
+    infrastructure["Router"]["infection"] = 0
 
-        if isinstance(leaderboard, list): 
+    infrastructure["Switch"]["infection"] = 0
 
-            legacy_scores = leaderboard 
+    infrastructure["Network"]["infection"] = 0
 
-            leaderboards = {level: [] for level in DIFFICULTY_SETTINGS} 
+    database["infection"] = 0
 
-            leaderboards["Normal"] = [ 
+    restart_available = False
 
-                entry 
+    restart_waves_remaining = 2
 
-                for entry in legacy_scores 
 
-                if isinstance(entry, dict) 
+    print("\n🛡️ EMERGENCY NETWORK RESTART ACTIVATED!")
 
-                and isinstance(entry.get("name"), str) 
+    print("Router: 0%")
 
-                and isinstance(entry.get("waves"), int) 
+    print("Switch: 0%")
 
-            ] 
+    print("Network: 0%")
 
-        elif isinstance(leaderboard, dict): 
+    print("Database: 0%")
 
-            leaderboards = {} 
+    print(f"\n🌊 You remain on Wave {wave}.")
 
-            for level in DIFFICULTY_SETTINGS: 
+    print("⚡ Reduced infrastructure growth will last for the next 2 waves.")
 
-                entries = leaderboard.get(level, []) 
+    return True
 
-                if not isinstance(entries, list): 
 
-                    entries = [] 
 
-                leaderboards[level] = [ 
 
-                    entry 
+def check_database():
 
-                    for entry in entries 
+    global backup_used
 
-                    if isinstance(entry, dict) 
 
-                    and isinstance(entry.get("name"), str) 
+    if database["infection"] < 100:
 
-                    and isinstance(entry.get("waves"), int) 
+        return False
 
-                ] 
 
-        else: 
+    print("\n" + "☠️" * 20)
 
-            print("\n⚠️ The leaderboard file is invalid; your score was not saved.") 
+    print("             DATABASE COMPROMISED")
 
-            return 
+    print("☠️" * 20)
 
- 
 
-    leaderboard = leaderboards[difficulty] 
+    if backup_available and not backup_used:
 
-    leaderboard.append({"name": name, "waves": score}) 
+        print("\n💾 BACKUP DATABASE AVAILABLE")
 
-    leaderboard.sort(key=lambda entry: entry["waves"], reverse=True) 
+        choice = get_choice("\nActivate Backup Database? (y/n): ")
 
-    leaderboard = leaderboard[:10] 
+        if choice.lower() == "y":
 
-    leaderboards[difficulty] = leaderboard 
+            database["infection"] = 25
 
- 
+            backup_used = True
 
-    try: 
+            print("\n💾 BACKUP ACTIVATED!")
 
-        LEADERBOARD_PATH.write_text( 
+            print("Database restored to 25% infection.")
 
-            json.dumps(leaderboards, indent=2) + "\n", 
+            return False
 
-            encoding="utf-8", 
 
-        ) 
+    if restart_available and emergency_network_restart():
 
-    except OSError: 
+        return False
 
-        print("\n⚠️ Your score could not be saved to the leaderboard.") 
 
- 
+    print("\n❌ GAME OVER")
 
-    clear_line() 
+    print("Your database has been completely compromised.")
 
-    print(f"             {difficulty.upper()} LEADERBOARD") 
+    return True
 
-    clear_line() 
 
-    for position, entry in enumerate(leaderboard, start=1): 
+LEADERBOARD_PATH = Path(__file__).with_name("leaderboard.json")
 
-        print(f"{position}. {entry['name']} - {entry['waves']} waves") 
 
-  
+def record_leaderboard_score():
 
-  
 
-# ============================================================ 
+    score = max(0, wave - 1)
 
-  
+    name = input("\nEnter your name for the leaderboard: ").strip()
 
-# WAVE 1 TUTORIAL 
+    if not name:
 
-  
+        name = "Commander"
 
-# ============================================================ 
 
-  
+    try:
 
-def tutorial_wave(): 
+        contents = LEADERBOARD_PATH.read_text(encoding="utf-8")
 
-  
+    except FileNotFoundError:
 
-    global funding 
+        leaderboards = {level: [] for level in DIFFICULTY_SETTINGS}
 
-  
+    except OSError:
 
-    global wave 
+        print("\n⚠️ The leaderboard could not be read or saved.")
 
-  
+        return
 
-    global tutorial_complete 
+    else:
 
-  
+        try:
 
-    clear_line() 
+            leaderboard = json.loads(contents)
 
-  
+        except json.JSONDecodeError:
 
-    print("        🛡️ CYBER DEFENCE") 
+            print("\n⚠️ The leaderboard file is invalid; your score was not saved.")
 
-  
+            return
 
-    print("             WAVE 1") 
 
-  
+        if isinstance(leaderboard, list):
 
-    clear_line() 
+            legacy_scores = leaderboard
 
-  
+            leaderboards = {level: [] for level in DIFFICULTY_SETTINGS}
 
-    print("\nWelcome, Commander!") 
+            leaderboards["Normal"] = [
 
-  
+                entry
 
-    print("\nYou are responsible for protecting your") 
+                for entry in legacy_scores
 
-  
+                if isinstance(entry, dict)
 
-    print("organisation from cyber attacks.") 
+                and isinstance(entry.get("name"), str)
 
-  
+                and isinstance(entry.get("waves"), int)
 
-    pause() 
+            ]
 
-  
+        elif isinstance(leaderboard, dict):
 
-    # -------------------------------------------------------- 
+            leaderboards = {}
 
-  
+            for level in DIFFICULTY_SETTINGS:
 
-    # OBJECTIVE 
+                entries = leaderboard.get(level, [])
 
-  
+                if not isinstance(entries, list):
 
-    # -------------------------------------------------------- 
+                    entries = []
 
-  
+                leaderboards[level] = [
 
-    clear_line() 
+                    entry
 
-  
+                    for entry in entries
 
-    print("                  OBJECTIVE") 
+                    if isinstance(entry, dict)
 
-  
+                    and isinstance(entry.get("name"), str)
 
-    clear_line() 
+                    and isinstance(entry.get("waves"), int)
 
-  
+                ]
 
-    print("\nYour job is simple:") 
+        else:
 
-  
+            print("\n⚠️ The leaderboard file is invalid; your score was not saved.")
 
-    print("Keep your network running for as long as possible.") 
+            return
 
-  
 
-    print("\nCyber threats will try to infect your devices.") 
+    leaderboard = leaderboards[difficulty]
 
-  
+    leaderboard.append({"name": name, "waves": score})
 
-    print("You must spend your funding wisely to protect them.") 
+    leaderboard.sort(key=lambda entry: entry["waves"], reverse=True)
 
-  
+    leaderboard = leaderboard[:10]
 
-    pause() 
+    leaderboards[difficulty] = leaderboard
 
-  
 
-    # -------------------------------------------------------- 
+    try:
 
-  
+        LEADERBOARD_PATH.write_text(
 
-    # NETWORK 
+            json.dumps(leaderboards, indent=2) + "\n",
 
-  
+            encoding="utf-8",
 
-    # -------------------------------------------------------- 
+        )
 
-  
+    except OSError:
 
-    clear_line() 
+        print("\n⚠️ Your score could not be saved to the leaderboard.")
 
-  
 
-    print("               YOUR NETWORK") 
+    clear_line()
 
-  
+    print(f"             {difficulty.upper()} LEADERBOARD")
 
-    clear_line() 
+    clear_line()
 
-  
+    for position, entry in enumerate(leaderboard, start=1):
 
-    print("\nYour network contains several devices.") 
+        print(f"{position}. {entry['name']} - {entry['waves']} waves")
 
-  
 
-    print("\nFor now, we're only going to worry about one:") 
 
-  
 
-    print("\n💻 PC") 
+# ============================================================
 
-  
 
-    print("\nDon't worry about the rest yet.") 
+# WAVE 1 TUTORIAL
 
-  
 
-    print("You'll learn about more parts of the network later.") 
+# ============================================================
 
-  
 
-    pause() 
+def tutorial_wave():
 
-  
 
-    # -------------------------------------------------------- 
+    global funding
 
-  
 
-    # FIRST ATTACK 
+    global wave
 
-  
 
-    # -------------------------------------------------------- 
+    global tutorial_complete
 
-  
 
-    clear_line() 
+    clear_line()
 
-  
 
-    print("                 ⚠️ WARNING") 
+    print("        🛡️ CYBER DEFENCE")
 
-  
 
-    clear_line() 
+    print("             WAVE 1")
 
-  
 
-    print("\n🚨 MALWARE DETECTED!") 
+    clear_line()
 
-  
 
-    print("\nA Virus has appeared on your PC.") 
+    print("\nWelcome, Commander!")
 
-  
 
-    devices["PC"]["infection"] = 5 
+    print("\nYou are responsible for protecting your")
 
-  
 
-    print("\n💻 PC Infection: 5%") 
+    print("organisation from cyber attacks.")
 
-  
 
-    print("\nThis means malware has started spreading.") 
+    pause()
 
-  
 
-    print("If infection reaches 100%, the device is compromised.") 
+    # --------------------------------------------------------
 
-  
 
-    pause() 
+    # OBJECTIVE
 
-  
 
-    # -------------------------------------------------------- 
+    # --------------------------------------------------------
 
-  
 
-    # PROTECTION 
+    clear_line()
 
-  
 
-    # -------------------------------------------------------- 
+    print("                  OBJECTIVE")
 
-  
 
-    clear_line() 
+    clear_line()
 
-  
 
-    print("             🛡️ PROTECT YOUR PC") 
+    print("\nYour job is simple:")
 
-  
 
-    clear_line() 
+    print("Keep your network running for as long as possible.")
 
-  
 
-    print("\nYou can spend funding to protect your devices.") 
+    print("\nCyber threats will try to infect your devices.")
 
-  
 
-    print("\n💰 Protect PC: £10") 
+    print("You must spend your funding wisely to protect them.")
 
-  
 
-    print("🛡️ Protection gained: +10%") 
+    pause()
 
-  
 
-    while True: 
+    # --------------------------------------------------------
 
-  
 
-        print("\nWhat would you like to do?") 
+    # NETWORK
 
-  
 
-        choice = get_choice( 
+    # --------------------------------------------------------
 
-            "\nChoose an option:", 
 
-            options=[("Protect the PC", "1"), ("Leave it alone", "2")], 
+    clear_line()
 
-        ) 
 
-  
+    print("               YOUR NETWORK")
 
-        if choice == "1": 
 
-  
+    clear_line()
 
-            if funding >= 10: 
 
-  
+    print("\nYour network contains several devices.")
 
-                funding -= 10 
 
-  
+    print("\nFor now, we're only going to worry about one:")
 
-                devices["PC"]["protection"] += 10 
 
-  
+    print("\n💻 PC")
 
-                print("\n🛡️ PC protected!") 
 
-  
+    print("\nDon't worry about the rest yet.")
 
-                print( 
 
-  
+    print("You'll learn about more parts of the network later.")
 
-                    "Protection:", 
 
-  
+    pause()
 
-                    devices["PC"]["protection"], 
 
-  
+    # --------------------------------------------------------
 
-                    "%" 
 
-  
+    # FIRST ATTACK
 
-                ) 
 
-  
+    # --------------------------------------------------------
 
-                print("Funding remaining: £", funding) 
 
-  
+    clear_line()
 
-                break 
 
-  
+    print("                 ⚠️ WARNING")
 
-            else: 
 
-  
+    clear_line()
 
-                print("\n❌ You don't have enough funding.") 
 
-  
+    print("\n🚨 MALWARE DETECTED!")
 
-        elif choice == "2": 
 
-  
+    print("\nA Virus has appeared on your PC.")
 
-            print("\n⚠️ Leaving the PC unprotected is risky.") 
 
-  
+    devices["PC"]["infection"] = 5
 
-            print("For this tutorial, let's protect it first.") 
 
-  
+    print("\n💻 PC Infection: 5%")
 
-        else: 
 
-  
+    print("\nThis means malware has started spreading.")
 
-            print("\n❌ Please choose 1 or 2.") 
 
-  
+    print("If infection reaches 100%, the device is compromised.")
 
-    pause() 
 
-  
+    pause()
 
-    # -------------------------------------------------------- 
 
-  
+    # --------------------------------------------------------
 
-    # FUNDING 
 
-  
+    # PROTECTION
 
-    # -------------------------------------------------------- 
 
-  
+    # --------------------------------------------------------
 
-    clear_line() 
 
-  
+    clear_line()
 
-    print("                  💰 FUNDING") 
 
-  
+    print("             🛡️ PROTECT YOUR PC")
 
-    clear_line() 
 
-  
+    clear_line()
 
-    print("\nFunding is your main resource.") 
 
-  
+    print("\nYou can spend funding to protect your devices.")
 
-    print("\nYou use it to:") 
 
-  
+    print("\n💰 Protect PC: £10")
 
-    print("• Protect devices") 
 
-  
+    print("🛡️ Protection gained: +10%")
 
-    print("• Buy security upgrades") 
 
-  
+    while True:
 
-    print("• Recover from attacks") 
 
-  
+        print("\nWhat would you like to do?")
 
-    print("• Strengthen your network") 
 
-  
+        choice = get_choice(
 
-    print("\nSpend carefully.") 
+            "\nChoose an option:",
 
-  
+            options=[("Protect the PC", "1"), ("Leave it alone", "2")],
 
-    print("You won't have unlimited money.") 
+        )
 
-  
 
-    pause() 
+        if choice == "1":
 
-  
 
-    # -------------------------------------------------------- 
+            if funding >= 10:
 
-  
 
-    # COMPLETE WAVE 
+                funding -= 10
 
-  
 
-    # -------------------------------------------------------- 
+                devices["PC"]["protection"] += 10
 
-  
 
-    clear_line() 
+                print("\n🛡️ PC protected!")
 
-  
 
-    print("             WAVE 1 COMPLETE") 
+                print(
 
-  
 
-    clear_line() 
+                    "Protection:",
 
-  
 
-    print("\nThe Virus is still spreading...") 
+                    devices["PC"]["protection"],
 
-  
 
-    devices["PC"]["infection"] = 9 
+                    "%"
 
-  
 
-    print("\n💻 PC Infection: 9%") 
+                )
 
-  
 
-    print( 
+                print("Funding remaining: £", funding)
 
-  
 
-        "🛡️ PC Protection:", 
+                break
 
-  
 
-        devices["PC"]["protection"], 
+            else:
 
-  
 
-        "%" 
+                print("\n❌ You don't have enough funding.")
 
-  
 
-    ) 
+        elif choice == "2":
 
-  
 
-    print("\nYour protection has slowed the infection.") 
+            print("\n⚠️ Leaving the PC unprotected is risky.")
 
-  
 
-    pause() 
+            print("For this tutorial, let's protect it first.")
 
-  
 
-    # -------------------------------------------------------- 
+        else:
 
-  
 
-    # COMPLETE 
+            print("\n❌ Please choose 1 or 2.")
 
-  
 
-    # -------------------------------------------------------- 
+    pause()
 
-  
 
-    clear_line() 
+    # --------------------------------------------------------
 
-  
 
-    print("          🎉 TUTORIAL COMPLETE") 
+    # FUNDING
 
-  
 
-    clear_line() 
+    # --------------------------------------------------------
 
-  
 
-    print("\nYou've learned the basics:") 
+    clear_line()
 
-  
 
-    print("✅ What infection means") 
+    print("                  💰 FUNDING")
 
-  
 
-    print("✅ How to protect a device") 
+    clear_line()
 
-  
 
-    print("✅ How funding works") 
+    print("\nFunding is your main resource.")
 
-  
 
-    print("✅ Why you need to react to threats") 
+    print("\nYou use it to:")
 
-  
 
-    print("\nFrom Wave 2 onwards, things become") 
+    print("• Protect devices")
 
-  
 
-    print("less predictable.") 
+    print("• Buy security upgrades")
 
-  
 
-    print("\nYou'll start encountering more threats") 
+    print("• Recover from attacks")
 
-  
 
-    print("and more decisions.") 
+    print("• Strengthen your network")
 
-  
 
-    tutorial_complete = True 
+    print("\nSpend carefully.")
 
-  
 
-    pause() 
+    print("You won't have unlimited money.")
 
-  
 
-  
+    pause()
 
-# ============================================================ 
 
-  
+    # --------------------------------------------------------
 
-# HOW TO PLAY 
 
-  
+    # COMPLETE WAVE
 
-# ============================================================ 
 
-  
+    # --------------------------------------------------------
 
-def how_to_play(): 
 
-  
+    clear_line()
 
-    clear_line() 
 
-  
+    print("             WAVE 1 COMPLETE")
 
-    print("                  HOW TO PLAY") 
 
-  
+    clear_line()
 
-    clear_line() 
 
-  
+    print("\nThe Virus is still spreading...")
 
-    print(""" 
 
-  
+    devices["PC"]["infection"] = 9
 
-Your objective is to keep the network running. 
 
-  
+    print("\n💻 PC Infection: 9%")
 
-Each wave: 
 
-  
+    print(
 
-1. Check your network. 
 
-  
+        "🛡️ PC Protection:",
 
-2. Check Current Threats. 
 
-  
+        devices["PC"]["protection"],
 
-3. Decide where to spend funding. 
 
-  
+        "%"
 
-4. Protect devices. 
 
-  
+    )
 
-5. Respond to malware. 
 
-  
+    print("\nYour protection has slowed the infection.")
 
-6. Recover compromised devices. 
 
-  
+    pause()
 
-7. Keep the Database alive. 
 
-  
+    # --------------------------------------------------------
 
-If the Database reaches 100% infection, 
 
-  
+    # COMPLETE
 
-you may be able to use the Backup Database 
 
-  
+    # --------------------------------------------------------
 
-or the one-time Emergency Network Restart. 
 
-  
+    clear_line()
 
-If neither is available, the game ends. 
 
-  
+    print("          🎉 TUTORIAL COMPLETE")
 
-The further you survive, the better your result. 
 
-  
+    clear_line()
 
-""") 
 
-  
+    print("\nYou've learned the basics:")
 
-    pause() 
 
-  
+    print("✅ What infection means")
 
-  
 
-# ============================================================ 
+    print("✅ How to protect a device")
 
-  
 
-# UPGRADES MENU 
+    print("✅ How funding works")
 
-  
 
-# ============================================================ 
+    print("✅ Why you need to react to threats")
 
-  
 
-def upgrades_menu(): 
+    print("\nFrom Wave 2 onwards, things become")
 
-  
 
-    while True: 
+    print("less predictable.")
 
-  
 
-        clear_line() 
+    print("\nYou'll start encountering more threats")
 
-  
 
-        print("                  UPGRADES") 
+    print("and more decisions.")
 
-  
 
-        clear_line() 
+    tutorial_complete = True
 
-  
 
-        choice = get_choice( 
+    pause()
 
-            "\nChoose an upgrade:", 
 
-            options=[ 
 
-                ("Protect | £10 | +10% device protection", "1"), 
 
-                ("Antivirus | £20 | up to -3% growth/wave", "2"), 
+# ============================================================
 
-                ( 
 
-                    "Password | £15 | -3% infection chance, up to -1% growth", 
+# HOW TO PLAY
 
-                    "3", 
 
-                ), 
+# ============================================================
 
-                ( 
 
-                    "Database | level x £50 | +15% defense, +£5 income/wave", 
+def how_to_play():
 
-                    "4", 
 
-                ), 
+    clear_line()
 
-                ( 
 
-                    "Backup | £450 at Wave 5 | one-time restore to 25%", 
+    print("                  HOW TO PLAY")
 
-                    "5", 
 
-                ), 
+    clear_line()
 
-                ("Recover Device", "6"), 
 
-                ("Recover Infrastructure", "7"), 
+    print("""
 
-                ("Return", "8"), 
 
-            ], 
+Your objective is to keep the network running.
 
-        ) 
 
-  
+Each wave:
 
-        if choice == "1": 
 
-  
+1. Check your network.
 
-            protect_device() 
 
-  
+2. Check Current Threats.
 
-        elif choice == "2": 
 
-  
+3. Decide where to spend funding.
 
-            buy_antivirus() 
 
-  
+4. Protect devices.
 
-        elif choice == "3": 
 
-  
+5. Respond to malware.
 
-            buy_password_security() 
 
-  
+6. Recover compromised devices.
 
-        elif choice == "4": 
 
-  
+7. Keep the Database alive.
 
-            upgrade_database() 
 
-  
+If the Database reaches 100% infection,
 
-        elif choice == "5": 
 
-  
+you may be able to use the Backup Database
 
-            backup_database() 
 
-  
+or the one-time Emergency Network Restart.
 
-        elif choice == "6": 
 
-  
+If neither is available, the game ends.
 
-            recover_device() 
 
-  
+The further you survive, the better your result.
 
-        elif choice == "7": 
 
-  
+""")
 
-            recover_infrastructure() 
 
-  
+    pause()
 
-        elif choice == "8": 
 
-  
 
-            break 
 
-  
+# ============================================================
 
-        else: 
 
-  
+# UPGRADES MENU
 
-            print("❌ Invalid choice.") 
 
-  
+# ============================================================
 
-  
 
-# ============================================================ 
+def upgrades_menu():
 
-  
 
-# MAIN GAME TURN 
+    while True:
 
-  
 
-# ============================================================ 
+        clear_line()
 
-  
 
-def play_wave(): 
+        print(arcade_text("[ POWER-UPS & UPGRADES ]", "yellow", bold=True))
 
-  
 
-    global wave 
+        clear_line()
 
-  
 
-    global liam_advice_turns 
+        choice = get_choice(
 
-  
+            "\nChoose an upgrade:",
 
-    global will_advice_turns 
+            options=[
 
-  
+                ("Protect | £10 | +10% device protection", "1"),
 
-    clear_line() 
+                ("Antivirus | £20 | up to -3% growth/wave", "2"),
 
-  
+                (
 
-    print(f"                    WAVE {wave}") 
+                    "Password | £15 | -3% infection chance, up to -1% growth",
 
-  
+                    "3",
 
-    clear_line() 
+                ),
 
-  
+                (
 
-    print("\nWhat would you like to do?") 
+                    "Database | level x £50 | +15% defense, +£5 income/wave",
 
-  
+                    "4",
 
-    while True: 
+                ),
 
-  
+                (
 
-        choice = get_choice( 
+                    "Backup | £450 at Wave 5 | one-time restore to 25%",
 
-            "\nSelect action:", 
+                    "5",
 
-            options=[ 
+                ),
 
-                ("View Network", "1"), 
+                ("Recover Device", "6"),
 
-                ("Current Threats", "2"), 
+                ("Recover Infrastructure", "7"),
 
-                ("Upgrades", "3"), 
+                ("Return", "8"),
 
-                ("Developer Assistance", "4"), 
+            ],
 
-                ("Continue Wave", "5"), 
+        )
 
-            ], 
 
-        ) 
+        if choice == "1":
 
-  
 
-        if choice == "1": 
+            protect_device()
 
-  
 
-            show_status() 
+        elif choice == "2":
 
-  
 
-        elif choice == "2": 
+            buy_antivirus()
 
-  
 
-            show_threats() 
+        elif choice == "3":
 
-  
 
-        elif choice == "3": 
+            buy_password_security()
 
-  
 
-            upgrades_menu() 
+        elif choice == "4":
 
-  
 
-        elif choice == "4": 
+            upgrade_database()
 
-  
 
-            developer_assistance() 
+        elif choice == "5":
 
-  
 
-        elif choice == "5": 
+            backup_database()
 
-  
 
-            break 
+        elif choice == "6":
 
-  
 
-        else: 
+            recover_device()
 
-  
 
-            print("❌ Invalid choice.") 
+        elif choice == "7":
 
-  
 
-    # -------------------------------------------------------- 
+            recover_infrastructure()
 
-  
 
-    # ATTACK 
+        elif choice == "8":
 
-  
 
-    # -------------------------------------------------------- 
+            break
 
-  
 
-    print("\n⚠️ The network is being attacked...") 
+        else:
 
-  
 
-    if not trigger_trojan_attack(): 
+            print("❌ Invalid choice.")
 
-        malware_attack() 
 
- 
 
-    # -------------------------------------------------------- 
 
- 
+# ============================================================
 
-    # EMAIL 
 
- 
+# MAIN GAME TURN
 
-    # -------------------------------------------------------- 
 
- 
+# ============================================================
 
-    email_chance = random.randint(1, 100) 
 
- 
+def play_wave():
 
-    if email_chance <= 25: 
 
- 
+    global wave
 
-        receive_email() 
 
- 
+    global liam_advice_turns
 
-    # -------------------------------------------------------- 
 
- 
+    global will_advice_turns
 
-    # ADVICE TIMERS 
 
- 
+    clear_line()
 
-    # -------------------------------------------------------- 
 
- 
+    show_wave_dashboard()
 
-    if liam_advice_turns > 0: 
 
- 
+    clear_line()
 
-        liam_advice_turns -= 1 
 
- 
+    print("\nWhat would you like to do?")
 
-    if will_advice_turns > 0: 
 
- 
+    while True:
 
-        will_advice_turns -= 1 
 
- 
+        choice = get_choice(
 
-    # -------------------------------------------------------- 
+            "\nSelect action:",
 
- 
+            options=[
 
-    # FUNDING 
+                ("Check network health", "1"),
 
- 
+                ("See current threats", "2"),
 
-    # -------------------------------------------------------- 
+                ("Choose an upgrade", "3"),
 
- 
+                ("Get a helpful hint", "4"),
 
-    generate_funding() 
+                ("Start the next attack", "5"),
 
- 
+            ],
 
-    print("\n💰 Funding after wave:", funding) 
+        )
 
- 
 
-    # -------------------------------------------------------- 
+        if choice == "1":
 
- 
 
-    # DATABASE 
+            show_status()
 
- 
 
-    # -------------------------------------------------------- 
+        elif choice == "2":
 
- 
 
-    if check_database(): 
+            show_threats()
 
- 
 
-        return False 
+        elif choice == "3":
 
- 
 
-    wave += 1 
+            upgrades_menu()
 
- 
 
-    return True 
+        elif choice == "4":
 
- 
 
-# ============================================================ 
+            developer_assistance()
 
-  
 
-# TROJAN HORSE ANTI-SKIP EVENT 
+        elif choice == "5":
 
-  
 
-# ============================================================ 
+            break
 
-  
 
-def trojan_defence_snapshot(): 
+        else:
 
-    """Return game values used to detect a successful defensive action.""" 
 
-    return ( 
+            print("❌ Invalid choice.")
 
-        funding, 
 
-        recoveries, 
+    # --------------------------------------------------------
 
-        repr(devices), 
 
-        repr(infrastructure), 
+    # ATTACK
 
-        repr(database), 
 
-        restart_available, 
+    # --------------------------------------------------------
 
-        backup_used, 
 
-    ) 
+    print("\n⚠️ The network is being attacked...")
 
-  
 
-  
+    if not trigger_trojan_attack():
 
-def handle_trojan_defence(): 
+        malware_attack()
 
-    """A successful upgrade/recovery resets skips or cancels the event.""" 
 
-    global trojan_event_state, consecutive_skips 
+    # --------------------------------------------------------
 
-  
 
-    if trojan_event_state == "ready": 
+    # EMAIL
 
-        consecutive_skips = 0 
 
-    elif trojan_event_state in ("warning", "escalation"): 
+    # --------------------------------------------------------
 
-        print("\nDefensive action detected.") 
 
-        if trojan_event_state == "warning": 
+    email_chance = random.randint(1, 100)
 
-            print("The Trojan Horse attack has been prevented.") 
 
-        else: 
+    if email_chance <= 25:
 
-            print("The Trojan Horse's follow-up attack has been stopped.") 
 
-        trojan_event_state = "finished" 
+        receive_email()
 
-        consecutive_skips = 0 
 
-  
+    # --------------------------------------------------------
 
-  
 
-def trigger_trojan_attack(): 
+    # ADVICE TIMERS
 
-    """Apply the next anti-skip strike and return whether growth is paused.""" 
 
-    global trojan_event_state 
+    # --------------------------------------------------------
 
-  
 
-    if trojan_event_state == "warning": 
+    if liam_advice_turns > 0:
 
-        database["infection"] = min(100, database["infection"] + 50) 
 
-        trojan_event_state = "escalation" 
+        liam_advice_turns -= 1
 
-  
 
-        print("\n" + "!" * 60) 
+    if will_advice_turns > 0:
 
-        print("TROJAN HORSE ATTACK — FIRST STRIKE") 
 
-        print("!" * 60) 
+        will_advice_turns -= 1
 
-        print("The Trojan Horse has infiltrated the database.") 
 
-        print(f"Database infection: {database['infection']}%") 
+    # --------------------------------------------------------
 
-        print("Defend your network before the next wave to stop escalation.") 
 
-        print("Normal malware growth is suppressed during this strike.") 
+    # FUNDING
 
-        return True 
 
-  
+    # --------------------------------------------------------
 
-    if trojan_event_state == "escalation": 
 
-        database["infection"] = min(100, database["infection"] + 25) 
+    generate_funding()
 
-        infrastructure["Router"]["infection"] = min( 
 
-            100, infrastructure["Router"]["infection"] + 25 
+    print("\n💰 Funding after wave:", funding)
 
-        ) 
 
-        infrastructure["Switch"]["infection"] = min( 
+    # --------------------------------------------------------
 
-            100, infrastructure["Switch"]["infection"] + 25 
 
-        ) 
+    # DATABASE
 
-        trojan_event_state = "finished" 
 
-  
+    # --------------------------------------------------------
 
-        print("\n" + "!" * 60) 
 
-        print("TROJAN HORSE ATTACK — FINAL STRIKE") 
+    if check_database():
 
-        print("!" * 60) 
 
-        print("The Trojan Horse has spread through the infrastructure.") 
+        return False
 
-        print(f"Database infection: {database['infection']}%") 
 
-        print(f"Router infection: {infrastructure['Router']['infection']}%") 
+    wave += 1
 
-        print(f"Switch infection: {infrastructure['Switch']['infection']}%") 
 
-        print("Normal malware growth is suppressed during this strike.") 
+    return True
 
-        return True 
 
-  
+# ============================================================
 
-    return False 
 
-  
+# TROJAN HORSE ANTI-SKIP EVENT
 
-  
 
-# ============================================================ 
+# ============================================================
 
-  
 
-# MAIN GAME 
+def trojan_defence_snapshot():
 
-  
+    """Return game values used to detect a successful defensive action."""
 
-# ============================================================ 
+    return (
 
-  
+        funding,
 
-def main_game(): 
+        recoveries,
 
-  
+        repr(devices),
 
-    global wave 
+        repr(infrastructure),
 
-  
+        repr(database),
 
-    # Wave 1 has already been completed by the tutorial. 
+        restart_available,
 
-  
+        backup_used,
 
-    wave = 2 
+    )
 
-  
 
-    while True: 
 
-  
 
-        if not play_wave(): 
+def handle_trojan_defence():
 
-  
+    """A successful upgrade/recovery resets skips or cancels the event."""
 
-            break 
+    global trojan_event_state, consecutive_skips
 
-  
 
-        clear_line() 
+    if trojan_event_state == "ready":
 
-  
+        consecutive_skips = 0
 
-        print("             WAVE COMPLETE") 
+    elif trojan_event_state in ("warning", "escalation"):
 
-  
+        print("\nDefensive action detected.")
 
-        clear_line() 
+        if trojan_event_state == "warning":
 
-  
+            print("The Trojan Horse attack has been prevented.")
 
-        print("\nYou survived the wave!") 
+        else:
 
-  
+            print("The Trojan Horse's follow-up attack has been stopped.")
 
-        print("\nPrepare for the next attack...") 
+        trojan_event_state = "finished"
 
-  
+        consecutive_skips = 0
 
-        pause() 
 
- 
 
-    record_leaderboard_score() 
 
-  
+def trigger_trojan_attack():
 
-  
+    """Apply the next anti-skip strike and return whether growth is paused."""
 
-# ============================================================ 
+    global trojan_event_state
 
-  
 
-# START MENU 
+    if trojan_event_state == "warning":
 
-  
+        database["infection"] = min(100, database["infection"] + 50)
 
-# ============================================================ 
+        trojan_event_state = "escalation"
 
-  
 
-def start_game(): 
+        print("\n" + "!" * 60)
 
- 
+        print("TROJAN HORSE ATTACK — FIRST STRIKE")
 
-    global difficulty 
+        print("!" * 60)
 
-  
+        print("The Trojan Horse has infiltrated the database.")
 
-    while True: 
+        print(f"Database infection: {database['infection']}%")
 
-  
+        print("Defend your network before the next wave to stop escalation.")
 
-        clear_line() 
+        print("Normal malware growth is suppressed during this strike.")
 
-  
+        return True
 
-        print("                 🛡️ CYBER DEFENCE") 
 
-  
+    if trojan_event_state == "escalation":
 
-        clear_line() 
+        database["infection"] = min(100, database["infection"] + 25)
 
-  
+        infrastructure["Router"]["infection"] = min(
 
-        choice = get_choice( 
+            100, infrastructure["Router"]["infection"] + 25
 
-            "\nChoose:", 
+        )
 
-            options=[ 
+        infrastructure["Switch"]["infection"] = min(
 
-                ("Play", "1"), 
+            100, infrastructure["Switch"]["infection"] + 25
 
-                ("How to Play", "2"), 
+        )
 
-                (f"Difficulty: {difficulty}", "4"), 
+        trojan_event_state = "finished"
 
-                ("Exit", "3"), 
 
-            ], 
+        print("\n" + "!" * 60)
 
-        ) 
+        print("TROJAN HORSE ATTACK — FINAL STRIKE")
 
-  
+        print("!" * 60)
 
-        if choice == "1": 
+        print("The Trojan Horse has spread through the infrastructure.")
 
-  
+        print(f"Database infection: {database['infection']}%")
 
-            tutorial_wave() 
+        print(f"Router infection: {infrastructure['Router']['infection']}%")
 
-  
+        print(f"Switch infection: {infrastructure['Switch']['infection']}%")
 
-            main_game() 
+        print("Normal malware growth is suppressed during this strike.")
 
-  
+        return True
 
-            break 
 
-  
+    return False
 
-        elif choice == "2": 
 
-  
 
-            how_to_play() 
 
-  
+# ============================================================
 
-        elif choice == "3": 
 
-  
+# MAIN GAME
 
-            print("\nGoodbye, Commander!") 
 
-  
+# ============================================================
 
-            break 
 
- 
+def main_game():
 
-        elif choice == "4": 
 
- 
+    global wave
 
-            difficulty = get_choice( 
 
-                "\nChoose difficulty:", 
+    # Wave 1 has already been completed by the tutorial.
 
-                options=[(level, level) for level in DIFFICULTY_SETTINGS], 
 
-            ) 
+    wave = 2
 
-  
 
-        else: 
+    while True:
 
-  
 
-            print("\n❌ Invalid choice.") 
+        if not play_wave():
 
-  
 
-  
+            break
 
-# ============================================================ 
 
-  
+        clear_line()
 
-# START 
 
-  
+        print("             WAVE COMPLETE")
 
-# ============================================================ 
 
-  
+        clear_line()
 
-start_game() 
+
+        print("\nYou survived the wave!")
+
+
+        print("\nPrepare for the next attack...")
+
+
+        pause()
+
+
+    record_leaderboard_score()
+
+
+
+
+# ============================================================
+
+
+# START MENU
+
+
+# ============================================================
+
+
+def start_game():
+
+
+    global difficulty
+
+
+    while True:
+
+
+        clear_line()
+
+
+        print(arcade_text("★ CYBER DEFENDER ★", "magenta", bold=True))
+
+
+        clear_line()
+
+
+        choice = get_choice(
+
+            "\nChoose:",
+
+            options=[
+
+                ("Play", "1"),
+
+                ("How to Play", "2"),
+
+                ("Exit", "3"),
+
+                (f"Difficulty: {difficulty}", "4"),
+
+            ],
+
+        )
+
+
+        if choice == "1":
+
+
+            tutorial_wave()
+
+
+            main_game()
+
+
+            break
+
+
+        elif choice == "2":
+
+
+            how_to_play()
+
+
+        elif choice == "3":
+
+
+            print("\nGoodbye, Commander!")
+
+
+            break
+
+
+        elif choice == "4":
+
+
+            difficulty = get_choice(
+
+                "\nChoose difficulty:",
+
+                options=[(level, level) for level in DIFFICULTY_SETTINGS],
+
+            )
+
+
+        else:
+
+
+            print("\n❌ Invalid choice.")
+
+
+
+
+# ============================================================
+
+
+# START
+
+
+# ============================================================
+
+
+start_game()
+
