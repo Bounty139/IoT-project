@@ -71,7 +71,7 @@ DIFFICULTY_SETTINGS = {
 
     },
 
-    "Extreme": {
+    "Extreme (warning)": {
 
         "starting_funding": 50,
 
@@ -1825,6 +1825,48 @@ def receive_email():
 
 
 
+def trigger_hard_mode_event():
+    global funding, recoveries
+
+    if difficulty not in ("Hard", "Extreme (warning)"):
+        return
+
+    extreme_mode = difficulty == "Extreme (warning)"
+    event_chance = 45 if extreme_mode else 30
+    if random.randint(1, 100) > event_chance:
+        return
+
+    event = random.choice(("supply_drop", "threat_intel", "malware_surge", "recovery_cache"))
+    print(arcade_text("\n★ HARD-MODE EVENT ★", "magenta", bold=True))
+
+    if event == "supply_drop":
+        bonus = 40 if extreme_mode else 25
+        funding += bonus
+        print(arcade_text(f"Supply convoy secured: +£{bonus} funding!", "green", bold=True))
+    elif event == "threat_intel":
+        target = max(devices, key=lambda name: devices[name]["infection"])
+        if devices[target]["infection"] > 0:
+            reduction = 20 if extreme_mode else 10
+            devices[target]["infection"] = max(0, devices[target]["infection"] - reduction)
+            print(arcade_text(f"Intel strike: {target} infection reduced by {reduction}%.", "cyan"))
+        else:
+            target = min(devices, key=lambda name: devices[name]["protection"])
+            bonus = 10 if extreme_mode else 5
+            devices[target]["protection"] = min(100, devices[target]["protection"] + bonus)
+            print(arcade_text(f"Threat intel strengthens {target}: +{bonus}% protection.", "cyan"))
+    elif event == "malware_surge":
+        target = random.choice(list(devices))
+        increase = 15 if extreme_mode else 8
+        devices[target]["infection"] = min(100, devices[target]["infection"] + increase)
+        print(arcade_text(f"Zero-day surge on {target}: infection +{increase}%!", "red", bold=True))
+    else:
+        bonus = 2 if extreme_mode else 1
+        recoveries += bonus
+        print(arcade_text(f"Rapid-response team arrived: +{bonus} recovery kit(s)!", "green", bold=True))
+
+
+
+
 # ============================================================
 
 
@@ -2460,6 +2502,61 @@ def record_leaderboard_score():
         print(f"{position}. {entry['name']} - {entry['waves']} waves")
 
 
+def show_leaderboard():
+    try:
+        contents = LEADERBOARD_PATH.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        leaderboards = {}
+    except OSError:
+        print("\n⚠️ The leaderboard could not be read.")
+        return
+    else:
+        try:
+            leaderboards = json.loads(contents)
+        except json.JSONDecodeError:
+            print("\n⚠️ The leaderboard file is invalid.")
+            return
+
+    if isinstance(leaderboards, list):
+        leaderboards = {"Normal": leaderboards}
+    elif not isinstance(leaderboards, dict):
+        print("\n⚠️ The leaderboard file is invalid.")
+        return
+
+    clear_line()
+    print("             LEADERBOARD")
+    clear_line()
+
+    if not leaderboards:
+        print("No leaderboard scores yet.")
+        return
+
+    for level, entries in leaderboards.items():
+        if not isinstance(level, str):
+            continue
+
+        print(f"\n{level.upper()}")
+        if not isinstance(entries, list):
+            print("No scores yet.")
+            continue
+
+        valid_entries = [
+            entry
+            for entry in entries
+            if isinstance(entry, dict)
+            and isinstance(entry.get("name"), str)
+            and isinstance(entry.get("waves"), int)
+        ]
+
+        if not valid_entries:
+            print("No scores yet.")
+            continue
+
+        valid_entries.sort(key=lambda entry: entry["waves"], reverse=True)
+        for position, entry in enumerate(valid_entries[:10], start=1):
+            print(f"{position}. {entry['name']} - {entry['waves']} waves")
+
+
 
 
 # ============================================================
@@ -3091,6 +3188,9 @@ def play_wave():
     show_wave_dashboard()
 
 
+    trigger_hard_mode_event()
+
+
     clear_line()
 
 
@@ -3551,5 +3651,6 @@ def start_game():
 # ============================================================
 
 
-start_game()
+if __name__ == "__main__":
+    show_leaderboard()
 
