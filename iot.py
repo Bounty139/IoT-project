@@ -1836,7 +1836,16 @@ def trigger_hard_mode_event():
     if random.randint(1, 100) > event_chance:
         return
 
-    event = random.choice(("supply_drop", "threat_intel", "malware_surge", "recovery_cache"))
+    event = random.choice((
+        "supply_drop",
+        "threat_intel",
+        "malware_surge",
+        "recovery_cache",
+        "security_audit",
+        "network_repair",
+        "funding_freeze",
+        "admin_support",
+    ))
     print(arcade_text("\n★ HARD-MODE EVENT ★", "magenta", bold=True))
 
     if event == "supply_drop":
@@ -1859,10 +1868,40 @@ def trigger_hard_mode_event():
         increase = 15 if extreme_mode else 8
         devices[target]["infection"] = min(100, devices[target]["infection"] + increase)
         print(arcade_text(f"Zero-day surge on {target}: infection +{increase}%!", "red", bold=True))
-    else:
+    elif event == "recovery_cache":
         bonus = 2 if extreme_mode else 1
         recoveries += bonus
         print(arcade_text(f"Rapid-response team arrived: +{bonus} recovery kit(s)!", "green", bold=True))
+    elif event == "security_audit":
+        target = min(devices, key=lambda name: devices[name]["protection"])
+        bonus = 15 if extreme_mode else 10
+        devices[target]["protection"] = min(100, devices[target]["protection"] + bonus)
+        print(arcade_text(f"Security audit hardens {target}: +{bonus}% protection.", "cyan", bold=True))
+    elif event == "network_repair":
+        target = min(infrastructure, key=lambda name: infrastructure[name]["protection"])
+        bonus = 15 if extreme_mode else 10
+        infrastructure[target]["protection"] = min(100, infrastructure[target]["protection"] + bonus)
+        print(arcade_text(f"Network crew reinforces {target}: +{bonus}% protection.", "green", bold=True))
+    elif event == "funding_freeze":
+        loss = min(funding, 30 if extreme_mode else 20)
+        funding -= loss
+        print(arcade_text(f"Emergency shutdown costs £{loss} in lost funding.", "red", bold=True))
+    else:
+        print("The system administrator is available for emergency support.")
+        choice = get_choice(
+            "Request help?",
+            options=[("Request admin support", "1"), ("Handle it yourself", "2")],
+        )
+        if choice == "1":
+            approval_chance = 50 if extreme_mode else 65
+            if random.randint(1, 100) <= approval_chance:
+                bonus = 50 if extreme_mode else 35
+                funding += bonus
+                print(arcade_text(f"Admin approved your request: +£{bonus} funding!", "green", bold=True))
+            else:
+                print(arcade_text("Admin support was declined. You are on your own this wave.", "red"))
+        else:
+            print("You decide to handle the attack without admin support.")
 
 
 
@@ -3652,5 +3691,5 @@ def start_game():
 
 
 if __name__ == "__main__":
-    show_leaderboard()
+    start_game()
 
