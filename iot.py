@@ -14,7 +14,7 @@ from pathlib import Path
 # ============================================================
 
 
-# CYBER DEFENCE — MAIN PROJECT v0.9
+# CYBER DEFENDER — MAIN PROJECT v0.9
 # This game tracks a fictional cyber defence scenario where the player
 # manages funding, protects devices, and fights off malware attacks.
 
