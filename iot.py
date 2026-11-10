@@ -37,6 +37,8 @@ DIFFICULTY_SETTINGS = {
 
     "Easy": {
 
+        "starting_funding": 200,
+
         "device_growth": 5,
 
         "infection_chance": 15,
@@ -46,6 +48,8 @@ DIFFICULTY_SETTINGS = {
     },
 
     "Normal": {
+
+        "starting_funding": 150,
 
         "device_growth": 7,
 
@@ -57,11 +61,25 @@ DIFFICULTY_SETTINGS = {
 
     "Hard": {
 
+        "starting_funding": 100,
+
         "device_growth": 10,
 
         "infection_chance": 30,
 
         "infrastructure_growth": 15,
+
+    },
+
+    "Extreme": {
+
+        "starting_funding": 50,
+
+        "device_growth": 15,
+
+        "infection_chance": 45,
+
+        "infrastructure_growth": 25,
 
     },
 
@@ -326,9 +344,12 @@ def read_menu_key():
 
         if key in ("\x00", "\xe0"):
 
-            return {"H": "UP", "P": "DOWN"}.get(msvcrt.getwch(), "")
+            return {"H": "UP", "P": "DOWN", "K": "LEFT", "M": "RIGHT"}.get(msvcrt.getwch(), "")
 
-        return "ENTER" if key in ("\r", "\n") else key
+        if key in ("\r", "\n"):
+            return "ENTER"
+
+        return "BACKSPACE" if key == "\b" else key
 
 
     import termios
@@ -363,7 +384,88 @@ def read_menu_key():
 
         return "DOWN"
 
+    if key == "\x1b[D":
+
+        return "LEFT"
+
+    if key == "\x1b[C":
+
+        return "RIGHT"
+
+    if key in ("\x7f", "\b"):
+
+        return "BACKSPACE"
+
     return "ENTER" if key in ("\r", "\n") else key
+
+
+def read_leaderboard_name():
+    if not sys.stdin.isatty():
+        return input("\nEnter your name for the leaderboard: ").strip() or "Commander"
+
+    keyboard = [
+        list("1234567890"),
+        list("QWERTYUIOP"),
+        list("ASDFGHJKL"),
+        list("ZXCVBNM"),
+        ["SPACE", "BACKSPACE", "DONE"],
+    ]
+    row = 1
+    column = 0
+    name = ""
+    display_lines = 8
+    displayed = False
+
+    while True:
+        if displayed:
+            sys.stdout.write(f"\x1b[{display_lines}A")
+
+        lines = [
+            "Enter your name for the leaderboard (arrows + Enter)",
+            f"Name: {name}_",
+            "",
+        ]
+
+        for row_index, keys in enumerate(keyboard):
+            rendered_keys = []
+            for column_index, key in enumerate(keys):
+                label = "SPACE" if key == "SPACE" else key
+                rendered_keys.append(
+                    f"[{label:^10}]" if (row_index, column_index) == (row, column) else f" {label:^10} "
+                )
+            lines.append(" ".join(rendered_keys))
+
+        for line in lines:
+            sys.stdout.write(f"\x1b[2K\r{line}\n")
+        sys.stdout.flush()
+        displayed = True
+
+        key = read_menu_key()
+        if key == "UP":
+            row = (row - 1) % len(keyboard)
+            column = min(column, len(keyboard[row]) - 1)
+        elif key == "DOWN":
+            row = (row + 1) % len(keyboard)
+            column = min(column, len(keyboard[row]) - 1)
+        elif key == "LEFT":
+            column = (column - 1) % len(keyboard[row])
+        elif key == "RIGHT":
+            column = (column + 1) % len(keyboard[row])
+        elif key == "BACKSPACE":
+            name = name[:-1]
+        elif key == "ENTER":
+            selected = keyboard[row][column]
+            if selected == "DONE":
+                return name.strip() or "Commander"
+            if selected == "BACKSPACE":
+                name = name[:-1]
+            elif selected == "SPACE":
+                if name and len(name) < 16:
+                    name += " "
+            elif len(name) < 16:
+                name += selected
+        elif len(key) == 1 and key.isprintable() and len(name) < 16:
+            name += key
 
 
 def select_option(prompt, options):
@@ -2238,11 +2340,7 @@ def record_leaderboard_score():
 
     score = max(0, wave - 1)
 
-    name = input("\nEnter your name for the leaderboard: ").strip()
-
-    if not name:
-
-        name = "Commander"
+    name = read_leaderboard_name()
 
 
     try:
@@ -3361,7 +3459,7 @@ def start_game():
     # Starts the title menu and lets the player choose to play, read the guide,
     # exit, or change the difficulty.
 
-    global difficulty
+    global difficulty, funding
 
 
     while True:
@@ -3397,6 +3495,8 @@ def start_game():
 
         if choice == "1":
 
+
+            funding = DIFFICULTY_SETTINGS[difficulty]["starting_funding"]
 
             tutorial_wave()
 
