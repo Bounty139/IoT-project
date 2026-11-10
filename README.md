@@ -22,6 +22,8 @@ Week	Task	Activities
 12.	Final review	Evaluate the prototype, review client requirements and prepare the final presentation.
 
 Timeline 2 – 8-week project plan
+
+
 This is a shorter alternative if you have less time available.
 Week	Task	Activities
 1	Research and requirements	Research cyber security, IoT and client requirements.
@@ -35,6 +37,8 @@ Week	Task	Activities
 
 
 Team task allocation
+
+
 You can also divide the work between different project roles so everyone has a responsibility.
 Role	Main responsibilities
 Project Manager	Create the timeline, organise meetings, monitor progress and manage deadlines.
@@ -48,11 +52,12 @@ Test Lead	Organise testing and record test results.
 QA Tester	Find bugs, test functionality and report problems.
 IT Support Technician/User	Help with technical problems and test how easy the game is to use.
 
-Tasks linked to your assignment
+Tasks linked to your assignment,
 These are the five main assessment stages you should make sure your timeline covers.
+
+
 Task 1 – Concept of Operations
 Research
-
 - Research project management methodologies.
 - Research IoT systems in different sectors.
 - Identify client requirements.
