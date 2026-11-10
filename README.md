@@ -1,11 +1,14 @@
 # IoT-project#
-Based on your Unit 9: Project Management and Unit 19: Internet of Things assignment brief, I've created two different project timelines with tasks, deadlines and responsibilities.
+I've created two different project timelines with tasks, deadlines and responsibilities.
 
-Your project is to develop a functional arcade-themed cyber security awareness game for ages 8–18, using IoT technology, which could be showcased at the Cheltenham Science Festival.
+The project is to develop a functional arcade-themed cyber security awareness game for ages 8–18, using IoT technology, which could be showcased at the Cheltenham Science Festival.
 
 I've divided the project into manageable stages so you we use the information in our project plan and Gantt chart.
+
 Timeline 1 – 12-week project plan
+
 Recommended
+
 This timeline gives your team enough time for research, planning, designing, development and testing.
 Week	Task	Activities
 1.	Project initiation	Understand the client requirements, identify the problem and agree on project objectives.
