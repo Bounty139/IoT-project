@@ -1,123 +1,108 @@
+"""Read-only LAN API for the Cyber Defender leaderboard."""
+
 import json
-import sys
-from pathlib import Path
+import os
+import socket
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit
 
 
-LEADERBOARD_PATH = Path(__file__).with_name("leaderboard.json")
-WIDTH = 56
-DIFFICULTY_ORDER = ("Easy", "Normal", "Hard", "Extreme", "Extreme (warning)")
-
-COLORS = {
-    "cyan": "96",
-    "green": "92",
-    "yellow": "93",
-    "red": "91",
-    "magenta": "95",
-    "white": "97",
-    "dim": "2",
-}
+PORT = 8765
+DIFFICULTIES = ("Easy", "Normal", "Hard", "Extreme")
 
 
-def arcade_text(text, color="cyan", bold=False):
-    if not sys.stdout.isatty():
-        return str(text)
-
-    style = COLORS.get(color, COLORS["cyan"])
-    if bold:
-        style = f"1;{style}"
-    return f"\033[{style}m{text}\033[0m"
-
-
-def load_leaderboards():
+def get_local_ip():
+    """Return the LAN address selected for outbound network traffic."""
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        contents = LEADERBOARD_PATH.read_text(encoding="utf-8")
-    except FileNotFoundError:
-        return {}
-    except OSError as error:
-        return error
+        probe.connect(("192.0.2.1", 9))
+        return probe.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        probe.close()
 
-    try:
-        data = json.loads(contents)
-    except json.JSONDecodeError as error:
-        return error
 
-    if isinstance(data, list):
-        data = {"Normal": data}
-    if not isinstance(data, dict):
-        return ValueError("The leaderboard file must contain a list or object.")
+def _read_scores(file_path):
+    scores = {difficulty: [] for difficulty in DIFFICULTIES}
+    if not os.path.exists(file_path):
+        return scores
 
-    leaderboards = {}
-    for level, entries in data.items():
-        if not isinstance(level, str):
-            continue
+    with open(file_path, "r", encoding="utf-8") as file:
+        saved = json.load(file)
+
+    if not isinstance(saved, dict):
+        raise ValueError("Leaderboard data must be a JSON object")
+
+    for difficulty in DIFFICULTIES:
+        entries = saved.get(difficulty, [])
         if not isinstance(entries, list):
-            entries = []
+            continue
 
-        valid_entries = [
-            entry
-            for entry in entries
-            if isinstance(entry, dict)
-            and isinstance(entry.get("name"), str)
-            and isinstance(entry.get("waves"), int)
-        ]
-        leaderboards[level] = sorted(
+        valid_entries = []
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            name = entry.get("name")
+            waves = entry.get("waves")
+            if isinstance(name, str) and type(waves) is int and waves >= 0:
+                valid_entries.append({"name": name, "waves": waves})
+
+        scores[difficulty] = sorted(
             valid_entries,
             key=lambda entry: entry["waves"],
-            reverse=True,
+            reverse=True
         )[:10]
 
-    return leaderboards
+    return scores
 
 
-def border(left, fill, right):
-    return f"{left}{fill * WIDTH}{right}"
+def create_server(file_path, host="0.0.0.0", port=PORT):
+    """Create the read-only HTTP server without starting its thread."""
+    absolute_file_path = os.path.abspath(file_path)
+
+    class LeaderboardHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            route = urlsplit(self.path).path
+            if route == "/health":
+                self._send_json(200, {"status": "ok"})
+                return
+
+            if route != "/api/leaderboard":
+                self._send_json(404, {"error": "Not found"})
+                return
+
+            try:
+                scores = _read_scores(absolute_file_path)
+            except (OSError, json.JSONDecodeError, ValueError):
+                self._send_json(503, {"error": "Leaderboard is unavailable"})
+                return
+
+            self._send_json(200, {"scores": scores})
+
+        def _send_json(self, status, payload):
+            body = json.dumps(payload).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format_string, *args):
+            return
+
+    class ReusableThreadingHTTPServer(ThreadingHTTPServer):
+        allow_reuse_address = True
+        daemon_threads = True
+
+    return ReusableThreadingHTTPServer((host, port), LeaderboardHandler)
 
 
-def framed_line(text="", color="cyan", bold=False):
-    content = f" {text}"[:WIDTH].ljust(WIDTH)
-    print(arcade_text(f"║{content}║", color, bold))
-
-
-def show_leaderboard():
-    leaderboards = load_leaderboards()
-
-    print(arcade_text(border("╔", "═", "╗"), "cyan", True))
-    framed_line("★  CYBER DEFENDER  ★", "magenta", True)
-    framed_line("ARCADE HIGH SCORES", "yellow", True)
-    print(arcade_text(border("╠", "═", "╣"), "cyan", True))
-
-    if isinstance(leaderboards, Exception):
-        framed_line("Could not load leaderboard.", "red", True)
-        framed_line(str(leaderboards), "red")
-        print(arcade_text(border("╚", "═", "╝"), "cyan", True))
-        return
-
-    if not leaderboards:
-        framed_line("No saved scores yet. Play a game to set a record!", "white")
-        print(arcade_text(border("╚", "═", "╝"), "cyan", True))
-        return
-
-    ordered_levels = [level for level in DIFFICULTY_ORDER if level in leaderboards]
-    ordered_levels.extend(sorted(level for level in leaderboards if level not in ordered_levels))
-
-    for level in ordered_levels:
-        print(arcade_text(border("╟", "─", "╢"), "cyan"))
-        framed_line(level.upper(), "yellow", True)
-
-        entries = leaderboards[level]
-        if not entries:
-            framed_line("No scores yet", "dim")
-            continue
-
-        for position, entry in enumerate(entries, start=1):
-            name = entry["name"][:30]
-            waves = entry["waves"]
-            row = f"{position:02}. {name:<30} {waves:>6} WAVES"
-            color = ("yellow", "white", "magenta")[position - 1] if position <= 3 else "cyan"
-            framed_line(row, color, position <= 3)
-
-    print(arcade_text(border("╚", "═", "╝"), "cyan", True))
-
-
-if __name__ == "__main__":
-    show_leaderboard()
+def start_server(file_path, host="0.0.0.0", port=PORT):
+    """Start the read-only leaderboard service on a daemon thread."""
+    server = create_server(file_path, host, port)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    return server
